@@ -2,223 +2,249 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>3‑Player Escape Room</title>
+<title>Escape Room – 3 Player</title>
 <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
 <style>
     body {
         margin: 0;
-        background: #111;
-        color: white;
+        background: #0d0d0d;
         font-family: Arial, sans-serif;
+        color: white;
         overflow: hidden;
     }
-    #lobby, #ui {
+
+    #lobby, #gameUI {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(20,20,20,0.9);
+        padding: 25px;
+        border-radius: 12px;
+        width: 350px;
+        text-align: center;
+        display: none;
+    }
+
+    #lobby { display: block; }
+
+    input, button {
+        width: 90%;
+        padding: 10px;
+        margin: 8px 0;
+        border-radius: 6px;
+        border: none;
+        font-size: 16px;
+    }
+
+    button {
+        background: #4CAF50;
+        color: white;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #45a049;
+    }
+
+    #playerList {
+        margin-top: 10px;
+        font-size: 14px;
+        color: #ccc;
+    }
+
+    #canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    #roomInfo {
         position: absolute;
         top: 10px;
         left: 10px;
         background: rgba(0,0,0,0.6);
-        padding: 15px;
-        border-radius: 8px;
-    }
-    #ui { display: none; }
-    input, button {
-        padding: 6px;
-        margin: 4px;
-        border-radius: 4px;
-        border: none;
-    }
-    #roomInfo {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: rgba(0,0,0,0.6);
-        padding: 15px;
+        padding: 12px;
         border-radius: 8px;
         display: none;
     }
 </style>
 </head>
+
 <body>
 
-<canvas id="gameCanvas" width="900" height="600"></canvas>
+<canvas id="canvas" width="900" height="600"></canvas>
 
+<!-- LOBBY -->
 <div id="lobby">
-    <h2>Multiplayer Lobby</h2>
-    <p id="myId">Your ID: ...</p>
+    <h2>Escape Room Multiplayer</h2>
 
-    <input id="playerName" placeholder="Your Name">
-    <input id="playerColor" placeholder="Color (e.g. red)">
-    <br>
+    <input id="nameInput" placeholder="Your Name">
+    <input id="colorInput" placeholder="Color (e.g. red)">
 
-    <button id="createRoomBtn">Create Room</button>
-    <br><br>
+    <button id="createBtn">Create Room</button>
 
-    <input id="roomIdInput" placeholder="Room ID">
-    <button id="joinRoomBtn">Join Room</button>
+    <input id="joinInput" placeholder="Room ID">
+    <button id="joinBtn">Join Room</button>
 
-    <p id="status"></p>
+    <p id="roomIdDisplay"></p>
+    <div id="playerList"></div>
+
+    <button id="startBtn" style="display:none;">Start Game</button>
 </div>
 
-<div id="ui">
-    <h3>Room Controls</h3>
-    <p id="roomTitle"></p>
-    <p id="roomDesc"></p>
-
-    <input id="codeInput" placeholder="Enter Code">
-    <button id="submitCode">Submit</button>
-
-    <p id="feedback"></p>
-</div>
-
+<!-- GAME UI -->
 <div id="roomInfo">
-    <h3>Room</h3>
-    <p id="roomNumber"></p>
+    <h3 id="roomTitle"></h3>
+    <p id="roomDesc"></p>
 </div>
 
 <script>
 /* -------------------------
-   CANVAS + GAME STATE
+   BASIC SETUP
 --------------------------*/
-const canvas = document.getElementById("gameCanvas");
+const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 let peer = new Peer();
-let connections = [];
-let isHost = false;
+let host = false;
 let roomId = null;
-
+let connections = [];
 let localId = null;
-let roles = {}; // assign roles 1,2,3
 
 let gameState = {
-    roomIndex: 0,
+    room: 0,
     players: {}
 };
 
-/* -------------------------
-   50 HARDCODED ROOMS
---------------------------*/
 const rooms = [
-    {title:"Room 1", code:"1234", desc:"A simple warm‑up puzzle."},
-    {title:"Room 2", code:"8421", desc:"Numbers are scrambled."},
-    {title:"Room 3", code:"9901", desc:"Look closely at the walls."},
-    {title:"Room 4", code:"5555", desc:"Repeating pattern."},
-    {title:"Room 5", code:"2048", desc:"A familiar number."},
-    {title:"Room 6", code:"7771", desc:"Lucky but tricky."},
-    {title:"Room 7", code:"3141", desc:"Pi is everywhere."},
-    {title:"Room 8", code:"2026", desc:"A year to remember."},
-    {title:"Room 9", code:"9000", desc:"It's over 9000!"},
-    {title:"Room 10", code:"1111", desc:"Uniform digits."},
-    {title:"Room 11", code:"2468", desc:"Even numbers only."},
-    {title:"Room 12", code:"1357", desc:"Odd numbers only."},
-    {title:"Room 13", code:"4321", desc:"Reverse order."},
-    {title:"Room 14", code:"8080", desc:"Mirrored digits."},
-    {title:"Room 15", code:"9999", desc:"Max difficulty? Not yet."},
-    {title:"Room 16", code:"1010", desc:"Binary vibes."},
-    {title:"Room 17", code:"1212", desc:"Repeating pairs."},
-    {title:"Room 18", code:"1818", desc:"Echo puzzle."},
-    {title:"Room 19", code:"7007", desc:"Secret agent code."},
-    {title:"Room 20", code:"6006", desc:"Symmetry matters."},
-    {title:"Room 21", code:"1230", desc:"Almost familiar."},
-    {title:"Room 22", code:"9090", desc:"Flip it."},
-    {title:"Room 23", code:"8880", desc:"One odd one out."},
-    {title:"Room 24", code:"2223", desc:"Three of a kind."},
-    {title:"Room 25", code:"1717", desc:"Repeating rhythm."},
-    {title:"Room 26", code:"5151", desc:"Pattern continues."},
-    {title:"Room 27", code:"3330", desc:"One missing."},
-    {title:"Room 28", code:"4441", desc:"Odd ending."},
-    {title:"Room 29", code:"9091", desc:"Almost mirrored."},
-    {title:"Room 30", code:"2020", desc:"A clear pattern."},
-    {title:"Room 31", code:"3030", desc:"Alternating zeros."},
-    {title:"Room 32", code:"4040", desc:"Echo again."},
-    {title:"Room 33", code:"5050", desc:"Half and half."},
-    {title:"Room 34", code:"6161", desc:"Repeating again."},
-    {title:"Room 35", code:"7272", desc:"Up and down."},
-    {title:"Room 36", code:"8383", desc:"Mirror rhythm."},
-    {title:"Room 37", code:"9494", desc:"Almost there."},
-    {title:"Room 38", code:"1239", desc:"Unexpected twist."},
-    {title:"Room 39", code:"6789", desc:"Climbing up."},
-    {title:"Room 40", code:"9876", desc:"Climbing down."},
-    {title:"Room 41", code:"1122", desc:"Two pairs."},
-    {title:"Room 42", code:"4242", desc:"Repeating life."},
-    {title:"Room 43", code:"7373", desc:"Strange pattern."},
-    {title:"Room 44", code:"8881", desc:"Odd ending again."},
-    {title:"Room 45", code:"1001", desc:"Palindrome."},
-    {title:"Room 46", code:"1221", desc:"Another palindrome."},
-    {title:"Room 47", code:"2112", desc:"Reverse palindrome."},
-    {title:"Room 48", code:"4554", desc:"Symmetry rules."},
-    {title:"Room 49", code:"6996", desc:"Perfect mirror."},
-    {title:"Room 50", code:"7777", desc:"Final challenge!"}
+    {title:"Room 1", desc:"Warm-up puzzle", code:"1234"},
+    {title:"Room 2", desc:"Harder puzzle", code:"4321"},
+    {title:"Room 3", desc:"Teamwork required", code:"9999"}
 ];
 
 /* -------------------------
-   PEERJS SETUP
+   PEERJS
 --------------------------*/
 peer.on("open", id => {
     localId = id;
-    document.getElementById("myId").textContent = "Your ID: " + id;
 });
 
-function setupConnection(conn) {
+/* -------------------------
+   HOST CREATES ROOM
+--------------------------*/
+document.getElementById("createBtn").onclick = () => {
+    host = true;
+    roomId = localId;
+    document.getElementById("roomIdDisplay").textContent = "Room ID: " + roomId;
+};
+
+/* -------------------------
+   JOIN ROOM
+--------------------------*/
+document.getElementById("joinBtn").onclick = () => {
+    const target = document.getElementById("joinInput").value.trim();
+    if (!target) return;
+
+    const conn = peer.connect(target);
+    setupClient(conn);
+};
+
+/* -------------------------
+   HOST ACCEPTS CONNECTIONS
+--------------------------*/
+peer.on("connection", conn => {
+    if (!host) return;
+    setupHost(conn);
+});
+
+/* -------------------------
+   HOST LOGIC
+--------------------------*/
+function setupHost(conn) {
     connections.push(conn);
+
+    conn.on("data", msg => {
+        if (msg.type === "MOVE") {
+            gameState.players[msg.id].x = msg.x;
+            gameState.players[msg.id].y = msg.y;
+        }
+    });
+
+    // Add player
+    gameState.players[conn.peer] = {
+        name: "Player",
+        color: "white",
+        x: 100,
+        y: 100
+    };
+
+    updatePlayerList();
+
+    if (connections.length === 2) {
+        document.getElementById("startBtn").style.display = "block";
+    }
+}
+
+/* -------------------------
+   CLIENT LOGIC
+--------------------------*/
+function setupClient(conn) {
+    conn.on("open", () => {
+        // Send player info
+        conn.send({
+            type: "JOIN",
+            name: document.getElementById("nameInput").value,
+            color: document.getElementById("colorInput").value,
+            id: localId
+        });
+    });
 
     conn.on("data", msg => {
         if (msg.type === "STATE") {
             gameState = msg.state;
             render();
-            updateRoomUI();
+            updateRoomInfo();
         }
     });
-
-    conn.on("open", () => {
-        document.getElementById("status").textContent =
-            "Players connected: " + (connections.length + 1);
-    });
 }
-
-document.getElementById("createRoomBtn").onclick = () => {
-    isHost = true;
-    roomId = localId;
-    document.getElementById("status").textContent =
-        "Room created. Share ID: " + roomId;
-};
-
-document.getElementById("joinRoomBtn").onclick = () => {
-    const target = document.getElementById("roomIdInput").value.trim();
-    if (!target) return;
-    const conn = peer.connect(target);
-    setupConnection(conn);
-};
-
-peer.on("connection", conn => {
-    if (connections.length >= 2) return; // max 3 players
-    setupConnection(conn);
-});
 
 /* -------------------------
-   PLAYER SETUP
+   START GAME (HOST)
 --------------------------*/
-function initPlayer() {
-    const name = document.getElementById("playerName").value || "Player";
-    const color = document.getElementById("playerColor").value || "cyan";
-
-    gameState.players[localId] = {
-        x: 100 + Math.random()*200,
-        y: 100 + Math.random()*200,
-        name,
-        color
-    };
-
+document.getElementById("startBtn").onclick = () => {
     document.getElementById("lobby").style.display = "none";
-    document.getElementById("ui").style.display = "block";
     document.getElementById("roomInfo").style.display = "block";
 
-    render();
-    updateRoomUI();
+    setInterval(() => {
+        broadcast({type:"STATE", state:gameState});
+    }, 100);
+};
+
+/* -------------------------
+   BROADCAST
+--------------------------*/
+function broadcast(msg) {
+    connections.forEach(c => c.send(msg));
 }
 
-document.getElementById("playerName").addEventListener("change", initPlayer);
-document.getElementById("playerColor").addEventListener("change", initPlayer);
+/* -------------------------
+   UI HELPERS
+--------------------------*/
+function updatePlayerList() {
+    const list = document.getElementById("playerList");
+    list.innerHTML = "Players:<br>";
+    for (let id in gameState.players) {
+        list.innerHTML += "- " + id + "<br>";
+    }
+}
+
+function updateRoomInfo() {
+    const r = rooms[gameState.room];
+    document.getElementById("roomTitle").textContent = r.title;
+    document.getElementById("roomDesc").textContent = r.desc;
+}
 
 /* -------------------------
    MOVEMENT
@@ -232,68 +258,25 @@ window.addEventListener("keydown", e => {
     if (e.key === "ArrowLeft") p.x -= 10;
     if (e.key === "ArrowRight") p.x += 10;
 
-    syncState();
     render();
 });
 
 /* -------------------------
-   ROOM LOGIC
---------------------------*/
-document.getElementById("submitCode").onclick = () => {
-    const input = document.getElementById("codeInput").value.trim();
-    const room = rooms[gameState.roomIndex];
-
-    if (input === room.code) {
-        document.getElementById("feedback").textContent = "Correct! Moving on...";
-        gameState.roomIndex++;
-        if (gameState.roomIndex >= rooms.length) {
-            gameState.roomIndex = rooms.length - 1;
-            document.getElementById("feedback").textContent = "You escaped all 50 rooms!";
-        }
-        syncState();
-        updateRoomUI();
-    } else {
-        document.getElementById("feedback").textContent = "Wrong code!";
-    }
-};
-
-/* -------------------------
-   SYNC
---------------------------*/
-function syncState() {
-    connections.forEach(c => c.send({type:"STATE", state:gameState}));
-}
-
-/* -------------------------
-   RENDERING
+   RENDER
 --------------------------*/
 function render() {
-    ctx.fillStyle = "#222";
+    ctx.fillStyle = "#111";
     ctx.fillRect(0,0,canvas.width,canvas.height);
 
-    // draw puzzle box
-    ctx.fillStyle = "#444";
-    ctx.fillRect(350, 200, 200, 200);
-
-    // draw players
     for (let id in gameState.players) {
         const p = gameState.players[id];
         ctx.fillStyle = p.color;
         ctx.fillRect(p.x, p.y, 30, 30);
-
         ctx.fillStyle = "white";
         ctx.fillText(p.name, p.x, p.y - 5);
     }
 }
-
-function updateRoomUI() {
-    const room = rooms[gameState.roomIndex];
-    document.getElementById("roomTitle").textContent = room.title;
-    document.getElementById("roomDesc").textContent = room.desc;
-    document.getElementById("roomNumber").textContent =
-        "Room " + (gameState.roomIndex + 1) + " / 50";
-}
-
 </script>
+
 </body>
 </html>
