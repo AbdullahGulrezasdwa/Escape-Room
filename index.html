@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>3-Player Virtual Escape Room</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050816;
+      --card: #111827;
+      --accent: #22c55e;
+      --accent2: #38bdf8;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --border: #1f2933;
+      --font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .app {
+      width: 100%;
+      max-width: 960px;
+      background: linear-gradient(145deg, #020617, #020617 40%, #020617 100%);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      box-shadow:
+        0 20px 40px rgba(15, 23, 42, 0.9),
+        0 0 0 1px rgba(15, 23, 42, 0.8);
+      padding: 20px 22px 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background:
+        radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.12), transparent 55%),
+        radial-gradient(circle at 100% 0%, rgba(34, 197, 94, 0.12), transparent 55%);
+      opacity: 0.9;
+      pointer-events: none;
+      z-index: -1;
+    }
+    h1, h2, h3 {
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    h1 {
+      font-size: 1.6rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h1 span.logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 20%, #facc15, #f97316 40%, #4f46e5 100%);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: #020617;
+      box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.9);
+    }
+    .subtitle {
+      margin-top: 4px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #22c55e, #16a34a);
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);
+    }
+    .timer {
+      font-size: 0.9rem;
+      color: var(--accent2);
+      font-variant-numeric: tabular-nums;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 2.1fr 1.4fr;
+      gap: 16px;
+    }
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: radial-gradient(circle at top left, rgba(148, 163, 184, 0.12), transparent 55%),
+                  radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.9), #020617 70%);
+      border-radius: 14px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      padding: 14px 14px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.12), transparent 55%);
+      opacity: 0.7;
+      pointer-events: none;
+      mix-blend-mode: screen;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      position: relative;
+      z-index: 1;
+    }
+    .card-title {
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #e5e7eb;
+    }
+    .card-tag {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.9);
+    }
+    .story {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-bottom: 10px;
+      position: relative;
+      z-index: 1;
+    }
+    .story strong {
+      color: #e5e7eb;
+    }
+    .puzzle {
+      margin-top: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px dashed rgba(148, 163, 184, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+    .puzzle h3 {
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: #e5e7eb;
+    }
+    .puzzle small {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .puzzle-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 6px;
+    }
+    input[type="text"], input[type="number"] {
+      background: #020617;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      padding: 6px 10px;
+      color: var(--text);
+      font-size: 0.85rem;
+      outline: none;
+      min-width: 0;
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--accent2);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5);
+    }
+    button {
+      border-radius: 999px;
+      border: none;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.12s ease;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #020617;
+      box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.4), 0 10px 20px rgba(22, 163, 74, 0.45);
+    }
+    button.primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(22, 163, 74, 0.6);
+    }
+    button.secondary {
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--muted);
+      border: 1px solid rgba(148, 163, 184, 0.6);
+    }
+    button.secondary:hover {
+      background: rgba(15, 23, 42, 1);
+      color: #e5e7eb;
+    }
+    button:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+    .status {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+    .status.ok {
+      color: var(--accent);
+    }
+    .status.err {
+      color: var(--danger);
+    }
+    .roles {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+      position: relative;
+      z-index: 1;
+    }
+    @media (max-width: 800px) {
+      .roles {
+        grid-template-columns: 1fr;
+      }
+    }
+    .role-card {
+      background: rgba(15, 23, 42, 0.95);
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      padding: 8px 9px 9px;
+      font-size: 0.8rem;
+    }
+    .role-title {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent2);
+      margin-bottom: 4px;
+    }
+    .role-body {
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .progress {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      font-size: 0.75rem;
+      position: relative;
+      z-index: 1;
+    }
+    .step {
+      flex: 1;
+      padding: 4px 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      text-align: center;
+      color: var(--muted);
+      background: rgba(15, 23, 42, 0.9);
+    }
+    .step.active {
+      border-color: var(--accent2);
+      color: #e5e7eb;
+      background: radial-gradient(circle at top, rgba(56, 189, 248, 0.25), rgba(15, 23, 42, 0.95));
+    }
+    .step.done {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: radial-gradient(circle at top, rgba(34, 197, 94, 0.25), rgba(15, 23, 42, 0.95));
+    }
+    .hint {
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+    .final {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.18), rgba(15, 23, 42, 0.98));
+      border: 1px solid rgba(34, 197, 94, 0.6);
+      display: none;
+      position: relative;
+      z-index: 1;
+    }
+    .final h2 {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+    .final p {
+      font-size: 0.9rem;
+      color: #d1fae5;
+      margin: 4px 0;
+    }
+    .final small {
+      font-size: 0.75rem;
+      color: #bbf7d0;
+    }
+    .glow-orb {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, rgba(56, 189, 248, 0.7), transparent 70%);
+      filter: blur(2px);
+      opacity: 0.4;
+      pointer-events: none;
+      top: -40px;
+      right: -40px;
+      mix-blend-mode: screen;
+    }
+    .glow-orb.green {
+      background: radial-gradient(circle at 30% 30%, rgba(34, 197, 94, 0.7), transparent 70%);
+      top: auto;
+      bottom: -40px;
+      left: -40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="glow-orb"></div>
+    <div class="glow-orb green"></div>
+
+    <div class="top-bar">
+      <div>
+        <h1><span class="logo">⧉</span> Neon Vault: 3‑Player Escape</h1>
+        <div class="subtitle">Work together as <strong>Decoder</strong>, <strong>Navigator</strong>, and <strong>Observer</strong> to unlock the vault.</div>
+      </div>
+      <div>
+        <div class="badge">
+          <span class="badge-dot"></span>
+          3‑Player Co‑op • Local • Browser‑only
+        </div>
+        <div class="timer" id="timer">Time: 00:00</div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- LEFT: STORY + PUZZLES -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Mission Briefing</div>
+          <div class="card-tag">Difficulty: Medium</div>
+        </div>
+        <div class="story">
+          The three of you have broken into a <strong>digital vault</strong> hidden beneath a neon city.
+          The AI guarding it has split the escape code into <strong>three layers</strong>:
+          a <strong>word key</strong>, a <strong>number code</strong>, and a <strong>final phrase</strong>.
+          Each player sees different clues. Only by <strong>talking and sharing</strong> can you escape.
+        </div>
+
+        <div class="progress">
+          <div class="step" id="step1">Step 1 · Word Key</div>
+          <div class="step" id="step2">Step 2 · Number Code</div>
+          <div class="step" id="step3">Step 3 · Final Phrase</div>
+        </div>
+
+        <!-- PUZZLE 1 -->
+        <div class="puzzle" id="puzzle1">
+          <h3>Step 1 — The Word Key</h3>
+          <small>Decoder leads this step. Others: read your role cards and give hints.</small>
+          <div>
+            On the vault door, three glowing words appear:
+            <strong>DESERT · OCEAN · FOREST</strong>.
+            The AI says: <em>“Choose the biome where life hides in the <strong>fewest</strong> places,
+            but survives with the <strong>strongest</strong> will.”</em>
+          </div>
+          <div class="hint">
+            Navigator and Observer each have extra hints about which biome fits best.
+          </div>
+          <div class="puzzle-row">
+            <label for="wordKey" style="font-size:0.8rem;">Enter the correct biome:</label>
+            <input id="wordKey" type="text" placeholder="DESERT / OCEAN / FOREST" />
+            <button class="primary" id="checkWord">Unlock Step 1</button>
+          </div>
+          <div class="status" id="status1">Waiting for the Decoder’s answer…</div>
+        </div>
+
+        <!-- PUZZLE 2 -->
+        <div class="puzzle" id="puzzle2" style="display:none;">
+          <h3>Step 2 — The Number Code</h3>
+          <small>Navigator leads this step. Others: share your hidden number clues.</small>
+          <div>
+            The AI reveals a sequence: <strong>3 · 6 · 9 · ?</strong> and says:
+            <em>“The next number is not just the next in the pattern. It is the
+            <strong>sum</strong> of the digits of the year when humans first walked on the Moon.”</em>
+          </div>
+          <div class="hint">
+            Decoder and Observer each know part of the Moon clue. Combine what you know.
+          </div>
+          <div class="puzzle-row">
+            <label for="numberCode" style="font-size:0.8rem;">Enter the correct number:</label>
+            <input id="numberCode" type="number" placeholder="?" />
+            <button class="primary" id="checkNumber">Unlock Step 2</button>
+          </div>
+          <div class="status" id="status2">Navigator, it’s your move.</div>
+        </div>
+
+        <!-- PUZZLE 3 -->
+        <div class="puzzle" id="puzzle3" style="display:none;">
+          <h3>Step 3 — The Final Phrase</h3>
+          <small>Observer leads this step. Everyone must share their final clues.</small>
+          <div>
+            The vault asks for a phrase of <strong>three words</strong>:
+            <em>“Say what you did to escape: a verb, then the place you chose,
+            then what you unlocked.”</em>
+          </div>
+          <div class="hint">
+            Each role card contains one of the three words (verb, place, or object).
+            Put them together in the right order.
+          </div>
+          <div class="puzzle-row">
+            <label for="finalPhrase" style="font-size:0.8rem;">Enter the phrase (3 words):</label>
+            <input id="finalPhrase" type="text" placeholder="e.g. WE ... ... " />
+            <button class="primary" id="checkFinal">Unlock Vault</button>
+          </div>
+          <div class="status" id="status3">Observer, assemble the final phrase.</div>
+        </div>
+
+        <div class="final" id="finalPanel">
+          <h2>Vault Unlocked!</h2>
+          <p id="finalMessage"></p>
+          <p>You escaped the Neon Vault together. Nice teamwork.</p>
+          <small>Tip: Try swapping roles next time and see if you’re faster.</small>
+        </div>
+      </div>
+
+      <!-- RIGHT: ROLES / CLUES / CONTROLS -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Role Console</div>
+          <div class="card-tag">3 Players</div>
+        </div>
+        <div class="story">
+          Assign one role to each player. Don’t just read your own card—<strong>say your clues out loud</strong>.
+          The puzzles are designed so that <strong>no one can solve everything alone</strong>.
+        </div>
+
+        <div class="roles">
+          <div class="role-card">
+            <div class="role-title">Decoder</div>
+            <div class="role-body">
+              <strong>Step 1 hint:</strong> Your instincts say that in the
+              <strong>DESERT</strong>, life is rare but incredibly tough.
+              <br /><br />
+              <strong>Step 2 hint:</strong> You remember that humans first walked on the Moon in
+              a year that starts with <strong>1‑9‑6‑9</strong>.
+              <br /><br />
+              <strong>Step 3 word:</strong> Your word is the <strong>verb</strong>:
+              say <strong>“WE ESCAPED”</strong> at the start.
+            </div>
+          </div>
+
+          <div class="role-card">
+            <div class="role-title">Navigator</div>
+            <div class="role-body">
+              <strong>Step 1 hint:</strong> You know that <strong>OCEAN</strong> and
+              <strong>FOREST</strong> are full of life everywhere, but the
+              <strong>DESERT</strong> has life only in a few hidden places.
+              <br /><br />
+              <strong>Step 2 hint:</strong> Add the digits of the Moon landing year:
+              1 + 9 + 6 + 9 = <strong>25</strong>.
+              That’s the number the AI wants.
+              <br /><br />
+              <strong>Step 3 word:</strong> Your word is the <strong>place</strong>:
+              say <strong>“DESERT”</strong> in the middle.
+            </div>
+          </div>
+
+          <div class="role-card">
+            <div class="role-title">Observer</div>
+            <div class="role-body">
+              <strong>Step 1 hint:</strong> You notice the AI’s phrase:
+              “fewest places, strongest will” — that sounds like the
+              <strong>DESERT</strong>.
+              <br /><br />
+              <strong>Step 2 hint:</strong> The AI flashes the number sequence
+              3, 6, 9, then shows a glowing <strong>2</strong> and <strong>5</strong>
+              side by side.
+              <br /><br />
+              <strong>Step 3 word:</strong> Your word is the <strong>object</strong>:
+              end the phrase with <strong>“THE VAULT”</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="puzzle" style="margin-top:10px;">
+          <h3>Session Controls</h3>
+          <small>Use these to restart or see your progress.</small>
+          <div class="puzzle-row">
+            <button class="secondary" id="restartBtn">Restart Run</button>
+            <button class="secondary" id="showHintBtn">Subtle Hint</button>
+          </div>
+          <div class="status" id="hintText">Hints will appear here if you get stuck.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const step1 = document.getElementById("step1");
+      const step2 = document.getElementById("step2");
+      const step3 = document.getElementById("step3");
+
+      const puzzle1 = document.getElementById("puzzle1");
+      const puzzle2 = document.getElementById("puzzle2");
+      const puzzle3 = document.getElementById("puzzle3");
+
+      const status1 = document.getElementById("status1");
+      const status2 = document.getElementById("status2");
+      const status3 = document.getElementById("status3");
+
+      const wordInput = document.getElementById("wordKey");
+      const numberInput = document.getElementById("numberCode");
+      const finalInput = document.getElementById("finalPhrase");
+
+      const checkWordBtn = document.getElementById("checkWord");
+      const checkNumberBtn = document.getElementById("checkNumber");
+      const checkFinalBtn = document.getElementById("checkFinal");
+
+      const finalPanel = document.getElementById("finalPanel");
+      const finalMessage = document.getElementById("finalMessage");
+
+      const restartBtn = document.getElementById("restartBtn");
+      const showHintBtn = document.getElementById("showHintBtn");
+      const hintText = document.getElementById("hintText");
+
+      const timerEl = document.getElementById("timer");
+      let startTime = Date.now();
+      let timerInterval = null;
+
+      function startTimer() {
+        startTime = Date.now();
+        if (timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+          const diff = Math.floor((Date.now() - startTime) / 1000);
+          const m = String(Math.floor(diff / 60)).padStart(2, "0");
+          const s = String(diff % 60).padStart(2, "0");
+          timerEl.textContent = "Time: " + m + ":" + s;
+        }, 1000);
+      }
+
+      function setStepState(step, state) {
+        step.classList.remove("active", "done");
+        if (state === "active") step.classList.add("active");
+        if (state === "done") step.classList.add("done");
+      }
+
+      function resetGame() {
+        wordInput.value = "";
+        numberInput.value = "";
+        finalInput.value = "";
+        status1.textContent = "Waiting for the Decoder’s answer…";
+        status1.className = "status";
+        status2.textContent = "Navigator, it’s your move.";
+        status2.className = "status";
+        status3.textContent = "Observer, assemble the final phrase.";
+        status3.className = "status";
+        hintText.textContent = "Hints will appear here if you get stuck.";
+        hintText.className = "status";
+
+        puzzle1.style.display = "block";
+        puzzle2.style.display = "none";
+        puzzle3.style.display = "none";
+        finalPanel.style.display = "none";
+
+        setStepState(step1, "active");
+        setStepState(step2, "");
+        setStepState(step3, "");
+
+        startTimer();
+      }
+
+      // Step 1: Word key
+      checkWordBtn.addEventListener("click", () => {
+        const value = (wordInput.value || "").trim().toUpperCase();
+        if (!value) {
+          status1.textContent = "Type one of the words: DESERT, OCEAN, or FOREST.";
+          status1.className = "status err";
+          return;
+        }
+        if (value === "DESERT") {
+          status1.textContent = "Correct! The vault accepts DESERT as the word key.";
+          status1.className = "status ok";
+          puzzle2.style.display = "block";
+          setStepState(step1, "done");
+          setStepState(step2, "active");
+        } else {
+          status1.textContent = "The AI rejects that biome. Talk to your team and try again.";
+          status1.className = "status err";
+        }
+      });
+
+      // Step 2: Number code
+      checkNumberBtn.addEventListener("click", () => {
+        const value = Number(numberInput.value);
+        if (!numberInput.value) {
+          status2.textContent = "Enter a number. Think about the Moon landing year.";
+          status2.className = "status err";
+          return;
+        }
+        if (value === 25) {
+          status2.textContent = "Nice! 25 is correct. The number code is accepted.";
+          status2.className = "status ok";
+          puzzle3.style.display = "block";
+          setStepState(step2, "done");
+          setStepState(step3, "active");
+        } else {
+          status2.textContent = "That’s not the number the AI wants. Re-check the digits of 1969.";
+          status2.className = "status err";
+        }
+      });
+
+      // Step 3: Final phrase
+      checkFinalBtn.addEventListener("click", () => {
+        const raw = (finalInput.value || "").trim().toUpperCase();
+        if (!raw) {
+          status3.textContent = "Enter a three-word phrase. Use your role words.";
+          status3.className = "status err";
+          return;
+        }
+        // Expected phrase: WE ESCAPED DESERT THE VAULT
+        // But we’ll accept minor spacing variations and ignore extra spaces.
+        const normalized = raw.replace(/\s+/g, " ").trim();
+        const expected = "WE ESCAPED DESERT THE VAULT";
+        if (normalized === expected) {
+          status3.textContent = "Perfect phrase! The vault unlocks.";
+          status3.className = "status ok";
+          setStepState(step3, "done");
+          finalPanel.style.display = "block";
+
+          const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
+          const m = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+          const s = String(totalSeconds % 60).padStart(2, "0");
+          finalMessage.textContent =
+            "You escaped in " + m + " minutes and " + s + " seconds.";
+          if (timerInterval) clearInterval(timerInterval);
+        } else {
+          status3.textContent =
+            "The AI doesn’t accept that phrase. Make sure you use: verb + place + object.";
+          status3.className = "status err";
+        }
+      });
+
+      // Hints
+      showHintBtn.addEventListener("click", () => {
+        if (puzzle1.style.display !== "none" && puzzle2.style.display === "none") {
+          hintText.textContent =
+            "Hint for Step 1: The biome with the fewest places where life survives is the DESERT.";
+        } else if (puzzle2.style.display !== "none" && puzzle3.style.display === "none") {
+          hintText.textContent =
+            "Hint for Step 2: 1969 → 1 + 9 + 6 + 9. Add them carefully.";
+        } else if (puzzle3.style.display !== "none") {
+          hintText.textContent =
+            "Hint for Step 3: Say exactly: WE ESCAPED DESERT THE VAULT.";
+        } else {
+          hintText.textContent = "Start the game first, then ask for a hint.";
+        }
+        hintText.className = "status";
+      });
+
+      // Restart
+      restartBtn.addEventListener("click", resetGame);
+
+      // Initialize
+      resetGame();
+    })();
+  </script>
+</body>
+</html>
