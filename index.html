@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>👥 ESCAPE TOGETHER · 3 PLAYER PUZZLES</title>
+  <title>👥 ESCAPE TOGETHER · 3 PLAYER · 4‑DIGIT ROOM</title>
   <style>
     * {
       box-sizing: border-box;
@@ -52,7 +52,7 @@
       font-weight: bold;
       border-left: 6px solid #f3c26b;
       box-shadow: inset 0 2px 5px #0e2938, 0 5px 0 #0c212c;
-      font-size: 1.2rem;
+      font-size: 1.3rem;
       letter-spacing: 2px;
     }
     .player-badge {
@@ -148,10 +148,19 @@
       border-radius: 48px;
       color: #ffefcf;
       font-weight: bold;
-      font-size: 1rem;
-      width: 150px;
+      font-size: 1.2rem;
+      width: 130px;
       text-align: center;
       outline: none;
+      -webkit-appearance: none;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
     }
   </style>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -166,7 +175,7 @@
     <div id="playerTags" style="display:flex; flex-wrap:wrap;"></div>
   </div>
   
-  <!-- Touch D-Pad (iPad friendly) -->
+  <!-- Touch D-Pad -->
   <div class="touch-panel">
     <div class="dir-btn" id="btnUp">⬆️</div>
   </div>
@@ -177,7 +186,7 @@
   </div>
   
   <div style="display:flex; flex-wrap:wrap; justify-content: center; margin: 12px 0;">
-    <input id="joinRoomInput" placeholder="Enter room code" maxlength="20">
+    <input type="number" id="joinRoomInput" placeholder="4‑digit code" min="1000" max="9999" maxlength="4" inputmode="numeric">
     <button id="hostBtn" class="gold">🎮 CREATE ROOM</button>
     <button id="joinBtn">🔗 JOIN ROOM</button>
   </div>
@@ -190,7 +199,7 @@
   </div>
   
   <div class="hint-area" id="hintMessage">
-    👥 Tap 'CREATE ROOM' to start — share the code with 2 friends!
+    👥 Tap 'CREATE ROOM' – you'll get a 4‑digit code to share!
   </div>
 </div>
 
@@ -209,13 +218,13 @@
     let connections = {};
     let myId = '';
     let isHost = false;
-    let currentRoom = '';
+    let currentRoom = '';       // 4-digit code
     
-    // Game state (host is source of truth)
+    // Game state (host authoritative)
     let game = {
       level: 0,
       players: {},       // id -> { name, color, x, y, inventory }
-      items: [],          // {type, x, y, collected}
+      items: [],
       puzzles: [],
       doors: [],
       exit: { x:16, y:10, open:false },
@@ -223,7 +232,7 @@
     };
     
     let local = { id:'', name:'You', color:'#ccc', x:2, y:2, inventory:[] };
-    let levelData = null; // walls etc.
+    let levelData = null;
     
     // UI elements
     const canvas = document.getElementById('gameCanvas');
@@ -234,13 +243,12 @@
     const hintMsg = document.getElementById('hintMessage');
     const joinInput = document.getElementById('joinRoomInput');
     
-    // ---------- LEVEL GENERATOR (FUN PUZZLES) ----------
+    // ---------- LEVEL GENERATOR ----------
     function generateLevel(idx) {
       const walls = Array(ROWS).fill().map(() => Array(COLS).fill(0));
       for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) 
         if(r===0||r===ROWS-1||c===0||c===COLS-1) walls[r][c]=1;
       
-      // simple inner walls
       for(let r=2; r<ROWS-2; r+=2)
         for(let c=2; c<COLS-2; c+=2)
           if(Math.random()<0.3) walls[r][c] = 1;
@@ -252,10 +260,9 @@
         { type:'keycard', x:8, y:4, collected:false }
       ];
       
-      // Cooperative puzzles
       const puzzles = [
         { type:'pressure', x:7, y:5, solved:false, required:2, playersOn:0 },
-        { type:'code', x:11, y:6, solved:false, code: (100+Math.floor(Math.random()*400)).toString(), hint:'' },
+        { type:'code', x:11, y:6, solved:false, code: (100+Math.floor(Math.random()*400)).toString() },
         { type:'lever', levers:[ {x:13,y:7,active:false}, {x:14,y:7,active:false} ], solved:false }
       ];
       
@@ -289,39 +296,38 @@
       if(isHost) broadcastState();
     }
     
-    // ---------- PEERJS (ZOOM-STYLE ROOM) ----------
-    function initPeer() {
-      if(peer) peer.destroy();
-      peer = new Peer();
+    // ---------- PEERJS (4‑DIGIT ROOM) ----------
+    function generateRoomCode() {
+      return Math.floor(1000 + Math.random() * 9000).toString();
+    }
+    
+    function initHost(roomCode) {
+      isHost = true;
+      currentRoom = roomCode;
+      
+      // Create peer with custom ID = room code
+      peer = new Peer(roomCode);
       
       peer.on('open', (id) => {
         myId = id;
-        if(isHost) {
-          currentRoom = id;  // use peer ID as room code
-          roomDisplay.innerText = `🏷️ ROOM: ${currentRoom}`;
-          hintMsg.innerText = `✅ Room created! Share this code: ${currentRoom}`;
-          // Host initializes own player
-          local = { id: myId, name:'HOST', color:COLORS[0], x:2, y:2, inventory:[] };
-          game.players = { [myId]: local };
-          loadLevel(0);
-        } else {
-          roomDisplay.innerText = `🔵 JOINING...`;
-        }
+        roomDisplay.innerText = `🏷️ ROOM: ${id}`;
+        hintMsg.innerText = `✅ Room created! Share code: ${id}`;
+        
+        local = { id: myId, name:'HOST', color:COLORS[0], x:2, y:2, inventory:[] };
+        game.players = { [myId]: local };
+        loadLevel(0);
       });
       
       peer.on('connection', (conn) => {
-        if(!isHost) return;
         connections[conn.peer] = conn;
         setupConnection(conn);
         
-        // Add player slot (max 3)
         const count = Object.keys(game.players).length;
         if(count < 3) {
           const name = NAMES[count] || 'GUEST';
           const color = COLORS[count % COLORS.length];
           game.players[conn.peer] = { id: conn.peer, name, color, x:2, y:2, inventory:[] };
         }
-        // Send full sync to new player
         setTimeout(() => {
           conn.send({ type:'FULL_SYNC', game, levelData });
         }, 200);
@@ -330,7 +336,27 @@
       
       peer.on('error', (err) => {
         roomDisplay.innerText = `❌ ERROR`;
-        hintMsg.innerText = `Connection error: ${err.type}. Try again.`;
+        hintMsg.innerText = `Error: ${err.type}. Try a different code?`;
+      });
+    }
+    
+    function initClient(roomCode) {
+      isHost = false;
+      peer = new Peer(); // auto ID
+      
+      peer.on('open', (id) => {
+        myId = id;
+        const conn = peer.connect(roomCode, { reliable:true });
+        connections[roomCode] = conn;
+        setupConnection(conn);
+        currentRoom = roomCode;
+        roomDisplay.innerText = `🔵 JOINED: ${roomCode}`;
+        hintMsg.innerText = `👋 Connected! Waiting for host data...`;
+      });
+      
+      peer.on('error', (err) => {
+        roomDisplay.innerText = `❌ ERROR`;
+        hintMsg.innerText = `Cannot join room ${roomCode}. Check code.`;
       });
     }
     
@@ -422,7 +448,6 @@
       const solved = game.puzzles.filter(p=>p.solved).length;
       game.doors.forEach(d => d.open = solved >= d.required);
       
-      // win condition
       const allSolved = game.puzzles.every(p=>p.solved);
       game.exit.open = allSolved;
       for(let pid in game.players) {
@@ -441,10 +466,9 @@
           puzzle.solved = true;
           hintMsg.innerText = `🔓 Code unlocked with key!`;
         } else {
-          hintMsg.innerText = `🔐 Need a key. Code hint: ${puzzle.code}`;
+          hintMsg.innerText = `🔐 Need a key. Code: ${puzzle.code}`;
         }
       } else if(puzzle.type === 'lever') {
-        // Activate lever if standing on it
         puzzle.levers.forEach(l => {
           if(player.x === l.x && player.y === l.y) l.active = true;
         });
@@ -512,7 +536,6 @@
       ctx.clearRect(0,0,720,480);
       if(!levelData) return;
       
-      // tiles
       for(let r=0; r<ROWS; r++) {
         for(let c=0; c<COLS; c++) {
           let x=c*TILE, y=r*TILE;
@@ -526,7 +549,6 @@
         }
       }
       
-      // puzzles
       game.puzzles.forEach(p => {
         if(p.type==='pressure') {
           let x=p.x*TILE, y=p.y*TILE;
@@ -548,7 +570,6 @@
         }
       });
       
-      // items
       game.items.filter(i=>!i.collected).forEach(it => {
         let x=it.x*TILE, y=it.y*TILE;
         ctx.fillStyle = it.type==='key'?'#FFD966':'#b0c4de';
@@ -556,20 +577,17 @@
         ctx.fillStyle='#000'; ctx.fillText(it.type[0], x+16,y+26);
       });
       
-      // doors
       game.doors.filter(d=>!d.open).forEach(d => {
         let x=d.x*TILE, y=d.y*TILE;
         ctx.fillStyle='#6b4f32'; ctx.fillRect(x+4,y+4,32,32);
         ctx.fillStyle='#9b7e5a'; ctx.fillRect(x+8,y+8,24,24);
       });
       
-      // exit
       const ex = game.exit;
       ctx.fillStyle = ex.open?'#b3ffaa':'#5f735f';
       ctx.fillRect(ex.x*TILE+8, ex.y*TILE+8, 24,24);
       ctx.fillStyle='#fff'; ctx.font='bold 20px sans'; ctx.fillText('🚪', ex.x*TILE+12, ex.y*TILE+30);
       
-      // players
       for(let pid in game.players) {
         const p = game.players[pid];
         ctx.fillStyle = p.color;
@@ -606,7 +624,7 @@
       levelDisplay.innerText = `🏆 LVL ${game.level+1}`;
     }
     
-    // ---------- EVENT LISTENERS (iPad friendly) ----------
+    // ---------- EVENT LISTENERS ----------
     function bindControls() {
       document.getElementById('btnUp').addEventListener('click', ()=>tryMove(0,-1));
       document.getElementById('btnDown').addEventListener('click', ()=>tryMove(0,1));
@@ -622,25 +640,21 @@
       });
       
       document.getElementById('hostBtn').addEventListener('click', () => {
-        isHost = true;
-        initPeer();
+        if(peer) peer.destroy();
+        const code = generateRoomCode();
+        initHost(code);
         roomDisplay.innerText = `🟡 CREATING...`;
         hintMsg.innerText = `🔄 Generating room...`;
       });
       
       document.getElementById('joinBtn').addEventListener('click', () => {
         const code = joinInput.value.trim();
-        if(!code) return;
-        isHost = false;
-        initPeer();
-        peer.on('open', () => {
-          const conn = peer.connect(code, { reliable:true });
-          connections[code] = conn;
-          setupConnection(conn);
-          currentRoom = code;
-          roomDisplay.innerText = `🔵 JOINED: ${code}`;
-          hintMsg.innerText = `👋 Connected! Waiting for host...`;
-        });
+        if(!code || code.length!==4 || isNaN(code)) {
+          hintMsg.innerText = `❌ Please enter a 4‑digit code.`;
+          return;
+        }
+        if(peer) peer.destroy();
+        initClient(code);
       });
       
       document.getElementById('interactBtn').addEventListener('click', localInteract);
@@ -665,6 +679,7 @@
     game.players = {};
     requestAnimationFrame(draw);
     roomDisplay.innerText = `⚫ TAP 'CREATE ROOM'`;
+    hintMsg.innerText = `👥 Tap CREATE to get a 4‑digit room code!`;
   })();
 </script>
 </body>
