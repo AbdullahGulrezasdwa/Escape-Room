@@ -2,753 +2,611 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>👥 3‑PLAYER ESCAPE ROOM · 700 LEVELS · PEERJS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔐 ESCAPE TOGETHER · 3‑PLAYER PUZZLE ROOMS</title>
   <style>
     * {
       box-sizing: border-box;
       user-select: none;
     }
-
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2e 100%);
+      background: radial-gradient(circle at 20% 30%, #1a2a3a, #0b1018);
       display: flex;
       justify-content: center;
       align-items: center;
       font-family: 'Segoe UI', 'Courier New', monospace;
     }
-
-    .game-container {
-      background: #0f1322;
-      border-radius: 2rem;
-      padding: 1.5rem;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,215,100,0.2);
-      border: 1px solid #2e3a5e;
+    .game-wrapper {
+      background: #0f1a1f;
+      border-radius: 2.5rem;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 25px 35px rgba(0,0,0,0.7), inset 0 0 0 2px #3e5f6b;
+      border-bottom: 6px solid #b87c4d;
     }
-
     canvas {
       display: block;
       margin: 0 auto;
-      border-radius: 20px;
-      box-shadow: 0 0 0 3px #1e2740, inset 0 0 0 2px #4e3b1e;
-      background: #1a1e30;
-      image-rendering: crisp-edges; /* pixelated style */
+      border-radius: 24px;
+      box-shadow: 0 0 0 4px #1e2f3a, inset 0 0 0 3px #c9a87c;
+      background: #17242b;
+      image-rendering: crisp-edges;
+      cursor: pointer;
     }
-
-    .panel {
+    .top-bar {
       display: flex;
-      flex-wrap: wrap;
-      align-items: center;
       justify-content: space-between;
-      margin: 16px 8px 4px 8px;
-      color: #efe7d0;
-      text-shadow: 0 2px 3px black;
+      margin: 16px 8px 12px 8px;
+      color: #f2e1c0;
+      text-shadow: 2px 2px 0 #0a1015;
     }
-
-    .status-badge {
-      background: #232a40;
-      padding: 8px 16px;
+    .badge {
+      background: #1b313e;
+      padding: 8px 22px;
       border-radius: 40px;
-      border-left: 4px solid #f3b33d;
       font-weight: bold;
+      border-left: 6px solid #e4b574;
+      box-shadow: inset 0 2px 5px #0c151c, 0 6px 0 #0b151c;
       letter-spacing: 1px;
-      box-shadow: inset 0 1px 3px #0b0e16, 0 4px 6px #00000030;
     }
-
     button {
-      background: #2d3b5a;
+      background: #2f4a5c;
       border: none;
-      color: white;
+      color: #f5e7d3;
       font-weight: bold;
       padding: 8px 18px;
-      margin: 4px 6px;
-      border-radius: 36px;
+      margin: 0 4px;
+      border-radius: 40px;
       font-size: 0.9rem;
       cursor: pointer;
-      box-shadow: 0 5px 0 #121624, 0 2px 8px black;
-      border-bottom: 2px solid #f3b33d;
-      transition: all 0.07s;
+      box-shadow: 0 5px 0 #121e26, 0 3px 8px black;
+      border-bottom: 2px solid #e4b574;
+      transition: 0.05s linear;
       text-transform: uppercase;
-      letter-spacing: 1px;
     }
-
     button:active {
       transform: translateY(4px);
-      box-shadow: 0 1px 0 #121624, 0 2px 6px black;
+      box-shadow: 0 1px 0 #121e26, 0 2px 6px black;
     }
-
-    button.primary {
-      background: #d48f2b;
-      border-bottom-color: #ffdb8e;
-      color: #101520;
+    button.gold {
+      background: #b87c4d;
+      border-bottom-color: #ffd89c;
+      color: #0d1a1f;
+      font-weight: 900;
     }
-
     input {
-      background: #1b2338;
-      border: 2px solid #3e4c6b;
+      background: #192f3c;
+      border: 2px solid #3f6b7c;
       padding: 8px 14px;
-      border-radius: 32px;
-      color: #f0e7c8;
+      border-radius: 36px;
+      color: #ffefd1;
       font-weight: bold;
-      width: 160px;
-      outline: none;
+      width: 150px;
       text-align: center;
-      font-size: 1rem;
+      outline: none;
     }
-
-    input::placeholder {
-      color: #8f9bb5;
-      font-weight: normal;
-    }
-
-    .player-list {
+    .inventory-panel {
       display: flex;
       gap: 12px;
       align-items: center;
-    }
-
-    .player-tag {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: #1e2745;
-      padding: 4px 14px;
-      border-radius: 30px;
-      border: 1px solid #5f6f94;
-    }
-
-    .color-dot {
-      width: 14px;
-      height: 14px;
-      border-radius: 4px;
-      background: gray;
-    }
-
-    .level-badge {
-      font-size: 1.5rem;
-      font-weight: 800;
-      background: #242d47;
+      background: #0e1e26b3;
       padding: 4px 20px;
       border-radius: 40px;
-      color: #fad98b;
+      backdrop-filter: blur(2px);
     }
-
-    .help-note {
-      font-size: 0.8rem;
-      opacity: 0.9;
-      margin-top: 6px;
+    .inv-slot {
+      background: #1b3847;
+      padding: 5px 15px;
+      border-radius: 30px;
+      color: #fad98b;
+      font-weight: bold;
+      border: 1px solid #aac7d4;
+    }
+    .puzzle-hint {
+      background: #1f3f4e;
+      margin-top: 12px;
+      padding: 8px 18px;
+      border-radius: 36px;
+      color: #cde5f0;
+      font-size: 0.9rem;
       text-align: center;
     }
   </style>
-  <!-- PeerJS from CDN -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
-<div class="game-container">
-  <canvas id="gameCanvas" width="720" height="480"></canvas>
-
-  <div class="panel">
-    <div class="status-badge" id="connectionStatus">⚫ OFFLINE</div>
-    <div class="level-badge" id="levelDisplay">LVL 1</div>
-    <div class="player-list" id="playerTags"></div>
+<div class="game-wrapper">
+  <canvas id="gameCanvas" width="800" height="500"></canvas>
+  
+  <div class="top-bar">
+    <div class="badge" id="connStatus">⚫ OFFLINE</div>
+    <div class="badge" id="levelDisplay">🏁 LVL 1</div>
+    <div class="inventory-panel">
+      <span>🎒 INVENTORY</span>
+      <span class="inv-slot" id="invDisplay">🔑 Key</span>
+    </div>
   </div>
-
-  <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+  
+  <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between;">
     <div>
-      <input type="text" id="roomIdInput" placeholder="Room ID" maxlength="20" value="ESCAPE3">
-      <button id="hostBtn" class="primary">🎮 HOST</button>
+      <input id="roomInput" placeholder="Room code" value="FUN700" maxlength="20">
+      <button id="hostBtn" class="gold">🎮 HOST</button>
       <button id="joinBtn">🔗 JOIN</button>
-      <button id="nextLevelBtn" style="background:#3d4968;">⏩ NEXT LVL</button>
     </div>
     <div>
-      <button id="helpActionBtn" style="background:#526e4b;">🤝 HELP / DROP ITEM</button>
-      <button id="resetLevelBtn">⟲ RESET</button>
+      <button id="interactBtn" style="background:#3d6e5a;">🖐️ INTERACT / USE</button>
+      <button id="shareItemBtn" style="background:#6e5a3d;">🤲 SHARE ITEM</button>
+      <button id="resetBtn">⟲ RESET</button>
+      <button id="nextBtn">⏩ NEXT</button>
     </div>
   </div>
-  <div class="help-note">
-    ⬆️⬇️⬅️➡️ move · stand on switches together · share key · all reach exit!
+  
+  <div class="puzzle-hint" id="hintMessage">
+    ⭐ Move with WASD/arrows · Stand on panels · Press E or INTERACT near objects
   </div>
 </div>
 
 <script>
-  (function(){
-    "use strict";
-
+  (() => {
     // ---------- CONFIG ----------
-    const TILE_SIZE = 40;          // 18x12 tiles = 720x480
-    const MAP_COLS = 18;
-    const MAP_ROWS = 12;
+    const TILE = 40;
+    const COLS = 20, ROWS = 12;  // 800x500
+    const PLAYER_COLORS = ['#FF8CA2', '#6EC8FF', '#A0E57E'];
+    const NAMES = ['ACE', 'BUDDY', 'COOP'];
     
-    // Player colors (3 players)
-    const PLAYER_COLORS = ['#FF6B9D', '#6BCBFF', '#B1E66F'];
-    const PLAYER_NAMES = ['P1', 'P2', 'P3'];
-
-    // ---------- GLOBAL STATE ----------
-    let peer = null;
-    let connections = {};           // peerId -> DataConnection
-    let myPeerId = '';
-    let isHost = false;
-    let roomId = 'ESCAPE3';
-    
-    // Game state (host-authoritative)
-    let gameState = {
-      levelIndex: 0,                // 0-based, we'll scale to 700 levels procedurally
-      players: {},                  // peerId -> { id, name, color, x, y, hasKey, pos }
-      items: [],                    // array of { type, x, y, collected, ... }
-      doors: [],                    // { x, y, open, requiresPlayers:2 }
-      switches: [],                 // { x, y, active, requiredCount:2 }
-      exit: { x: 16, y: 10, active: false },
-      keySpawned: false,
+    // global
+    let peer, conns = {}, myId = '', isHost = false, room = 'FUN700';
+    let game = {
+      level: 0,
+      players: {},
+      items: [],        // {type, x, y, collected, owner?}
+      puzzles: [],      // interactive puzzles
+      doors: [],
+      exit: {x:18,y:10,open:false},
       win: false,
     };
-
-    // Local player info
-    let localPlayer = {
-      id: '',
-      name: 'You',
-      color: '#AAAAAA',
-      x: 2, y: 2,
-      hasKey: false,
-    };
-
-    // Rendering & input
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    let keysPressed = {};
-    let lastSentPosition = { x:2, y:2 };
+    let local = { id:'', name:'You', color:'#ccc', x:2,y:2, inventory:[] };
+    let currentLevelData = null; // walls, etc
     
     // UI elements
-    const statusDiv = document.getElementById('connectionStatus');
-    const levelDisplay = document.getElementById('levelDisplay');
-    const playerTagsDiv = document.getElementById('playerTags');
-    const roomInput = document.getElementById('roomIdInput');
-    const hostBtn = document.getElementById('hostBtn');
-    const joinBtn = document.getElementById('joinBtn');
-    const nextBtn = document.getElementById('nextLevelBtn');
-    const resetBtn = document.getElementById('resetLevelBtn');
-    const helpBtn = document.getElementById('helpActionBtn');
-
-    // ---------- LEVEL GENERATOR (scalable to 700+) ----------
-    function generateLevel(levelIdx) {
-      // Base empty map (0 = floor, 1 = wall)
-      let walls = Array(MAP_ROWS).fill().map(() => Array(MAP_COLS).fill(0));
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const connStatus = document.getElementById('connStatus');
+    const lvlDisplay = document.getElementById('levelDisplay');
+    const invDisplay = document.getElementById('invDisplay');
+    const hintEl = document.getElementById('hintMessage');
+    const roomInput = document.getElementById('roomInput');
+    
+    // ---------- PUZZLE TYPES ----------
+    const PUZZLE_TYPES = {
+      CODE_PANEL: 'code',      // enter 3-digit code (displayed as hint somewhere)
+      LEVER_SET: 'lever',      // pull levers in correct order
+      KEYCARD_READER: 'keycard',
+      WEIGHT_PLATE: 'weight',  // need 2 players + item
+    };
+    
+    // ---------- LEVEL GENERATOR (FUN PUZZLES!) ----------
+    function buildLevel(idx) {
+      const walls = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+      // border
+      for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) 
+        if(r===0||r===ROWS-1||c===0||c===COLS-1) walls[r][c]=1;
       
-      // Add border walls
-      for (let r=0; r<MAP_ROWS; r++) {
-        for (let c=0; c<MAP_COLS; c++) {
-          if (r===0 || r===MAP_ROWS-1 || c===0 || c===MAP_COLS-1) walls[r][c] = 1;
-        }
-      }
-
-      // Difficulty scaling: more walls, puzzles
-      const difficulty = Math.min(0.95, levelIdx / 700);
-      const wallDensity = 0.05 + difficulty * 0.2;
-      
-      // procedural inner walls (simple maze style)
-      for (let r=2; r<MAP_ROWS-2; r+=2) {
-        for (let c=2; c<MAP_COLS-2; c+=2) {
-          if (Math.random() < wallDensity * 1.5) {
+      const diff = Math.min(0.9, idx/700);
+      // procedural walls (maze-like)
+      for(let r=2; r<ROWS-2; r+=2) {
+        for(let c=2; c<COLS-2; c+=2) {
+          if(Math.random()<0.25+diff*0.3) {
             walls[r][c] = 1;
-            // sometimes extend
-            if (Math.random()<0.4 && c+1<MAP_COLS-1) walls[r][c+1] = 1;
-            if (Math.random()<0.3 && r+1<MAP_ROWS-1) walls[r+1][c] = 1;
+            if(Math.random()<0.4 && c+1<COLS-1) walls[r][c+1]=1;
           }
         }
       }
-
-      // Ensure spawn area clear
-      walls[2][2] = 0; walls[2][3] = 0; walls[3][2] = 0;
-      walls[MAP_ROWS-3][MAP_COLS-3] = 0; 
+      // clear spawn
+      walls[2][2]=0; walls[2][3]=0; walls[3][2]=0;
       
-      // Exit position
-      const exitX = MAP_COLS-3, exitY = MAP_ROWS-3;
-      walls[exitY][exitX] = 0;
+      // Items: key, keycard, crowbar
+      const items = [];
+      if(Math.random()>0.2) items.push({type:'key', x:4, y:3, collected:false});
+      if(idx>20) items.push({type:'keycard', x:6, y:5, collected:false});
       
-      // Items & puzzles
-      let items = [];
-      let doors = [];
-      let switches = [];
+      // Puzzles
+      const puzzles = [];
+      // Code panel with hint
+      const code = `${Math.floor(Math.random()*400)+100}`;
+      puzzles.push({
+        type: 'code', x: 8, y: 4, solved: false, 
+        code: code, input: '', hint: `🔢 CODE: ${code}`,
+      });
       
-      // Key placement (always near start early, later hidden)
-      let keyPlaced = false;
-      for (let attempt=0; attempt<50; attempt++) {
-        let kx = 2 + Math.floor(Math.random()*(MAP_COLS-4));
-        let ky = 2 + Math.floor(Math.random()*(MAP_ROWS-4));
-        if (walls[ky][kx] === 0 && !(kx===2&&ky===2)) {
-          items.push({ type: 'key', x: kx, y: ky, collected: false, owner: null });
-          keyPlaced = true;
+      // Lever puzzle (sequence)
+      puzzles.push({
+        type: 'lever', x: 12, y: 5, solved: false,
+        levers: [false, false, false], correct: [1,0,2], pulled: [],
+      });
+      
+      // Keycard reader
+      puzzles.push({
+        type: 'keycard', x: 15, y: 7, solved: false,
+      });
+      
+      // Weight plate (coop)
+      puzzles.push({
+        type: 'weight', x: 5, y: 8, solved: false, requiredPlayers: 2,
+      });
+      
+      // Door that requires puzzles
+      const doors = [{ x: 16, y: 9, open: false, req: 'puzzles', needed: 2 }];
+      
+      return { walls, items, puzzles, doors, exit: {x:18, y:10, open:false} };
+    }
+    
+    function loadLevel(idx) {
+      currentLevelData = buildLevel(idx);
+      game.level = idx;
+      game.items = JSON.parse(JSON.stringify(currentLevelData.items));
+      game.puzzles = JSON.parse(JSON.stringify(currentLevelData.puzzles));
+      game.doors = JSON.parse(JSON.stringify(currentLevelData.doors));
+      game.exit = {x:18, y:10, open:false};
+      game.win = false;
+      
+      // reset players
+      let spawns = [[2,2],[3,2],[2,3]];
+      let i=0;
+      for(let pid in game.players) {
+        let sp = spawns[i%3];
+        game.players[pid].x = sp[0]; game.players[pid].y = sp[1];
+        game.players[pid].inventory = [];
+        i++;
+      }
+      if(local.id) { local.x=2; local.y=2; local.inventory=[]; }
+      updateUI();
+      if(isHost) broadcastState();
+    }
+    
+    // ---------- PEERJS ----------
+    function initPeer() {
+      peer = new Peer();
+      peer.on('open', id => {
+        myId = id;
+        connStatus.innerText = `🟢 ${id.slice(0,6)}`;
+      });
+      peer.on('connection', conn => {
+        if(!isHost) return;
+        conns[conn.peer] = conn;
+        conn.on('data', data => handleData(conn.peer, data));
+        conn.on('close', () => { delete conns[conn.peer]; delete game.players[conn.peer]; });
+        // add player slot
+        const slots = Object.keys(game.players).length;
+        if(slots<3) {
+          game.players[conn.peer] = {
+            id: conn.peer, name: NAMES[slots], color: PLAYER_COLORS[slots],
+            x:2, y:2, inventory:[]
+          };
+          broadcastState();
+        }
+      });
+      peer.on('error', e => connStatus.innerText = '🔴 ERROR');
+    }
+    
+    function handleData(sender, data) {
+      if(!isHost && data.type === 'FULL') {
+        game = data.game;
+        currentLevelData = data.levelData;
+        if(game.players[myId]) local = {...game.players[myId]};
+        updateUI();
+      }
+      if(isHost) {
+        if(data.type === 'MOVE') {
+          const p = game.players[sender];
+          if(p && canMove(data.x, data.y, p)) {
+            p.x = data.x; p.y = data.y;
+            checkPickup(p);
+            checkPuzzles();
+            broadcastState();
+          }
+        } else if(data.type === 'INTERACT') {
+          handleInteraction(sender, data.puzzleIdx);
+        } else if(data.type === 'SHARE') {
+          shareItem(sender);
+        } else if(data.type === 'RESET') {
+          loadLevel(game.level);
+        } else if(data.type === 'NEXT' && game.win) {
+          loadLevel((game.level+1)%700);
+        }
+      } else {
+        if(data.type === 'STATE') {
+          game = data.game;
+          if(game.players[myId]) local = {...game.players[myId]};
+          updateUI();
+        }
+      }
+    }
+    
+    function broadcastState() {
+      if(!isHost) return;
+      const msg = { type: 'STATE', game };
+      Object.values(conns).forEach(c => c.send(msg));
+    }
+    
+    // ---------- GAME MECHANICS ----------
+    function canMove(nx, ny, player) {
+      if(nx<0||ny<0||nx>=COLS||ny>=ROWS) return false;
+      if(currentLevelData.walls[ny][nx]===1) return false;
+      for(let d of game.doors) if(!d.open && d.x===nx && d.y===ny) return false;
+      return true;
+    }
+    
+    function checkPickup(player) {
+      for(let item of game.items) {
+        if(!item.collected && item.x===player.x && item.y===player.y) {
+          item.collected = true;
+          if(!player.inventory) player.inventory = [];
+          player.inventory.push(item.type);
+        }
+      }
+      checkWin();
+    }
+    
+    function checkPuzzles() {
+      // weight plates
+      game.puzzles.forEach(p => {
+        if(p.type==='weight' && !p.solved) {
+          let cnt = 0;
+          for(let pid in game.players) {
+            const pl = game.players[pid];
+            if(pl.x===p.x && pl.y===p.y) cnt++;
+          }
+          if(cnt >= p.requiredPlayers) p.solved = true;
+        }
+      });
+      
+      // update doors
+      const solvedCount = game.puzzles.filter(p=>p.solved).length;
+      game.doors.forEach(d => { d.open = solvedCount >= d.needed; });
+      checkWin();
+    }
+    
+    function checkWin() {
+      const allSolved = game.puzzles.every(p=>p.solved);
+      const exit = game.exit;
+      exit.open = allSolved;
+      for(let pid in game.players) {
+        const p = game.players[pid];
+        if(exit.open && p.x===exit.x && p.y===exit.y) game.win = true;
+      }
+    }
+    
+    function handleInteraction(pid, puzzleIdx) {
+      const player = game.players[pid];
+      const puzzle = game.puzzles[puzzleIdx];
+      if(!puzzle || puzzle.solved) return;
+      
+      // distance check
+      if(Math.abs(player.x-puzzle.x)>1 || Math.abs(player.y-puzzle.y)>1) return;
+      
+      if(puzzle.type === 'code') {
+        // simulate entering code (in real game we'd have UI, here auto-solve if player has hint)
+        // For fun: if player inventory has 'key', they can solve
+        if(player.inventory.includes('key')) {
+          puzzle.solved = true;
+          hintEl.innerText = `✅ Code panel solved!`;
+        } else {
+          hintEl.innerText = `🔐 Need key to activate panel.`;
+        }
+      } else if(puzzle.type === 'lever') {
+        // toggle lever order
+        puzzle.pulled.push(puzzle.levers.length);
+        if(puzzle.pulled.length===3) {
+          if(JSON.stringify(puzzle.pulled) === JSON.stringify(puzzle.correct)) puzzle.solved = true;
+          else puzzle.pulled = [];
+        }
+        hintEl.innerText = `🎚️ Lever ${puzzle.pulled.length}/3`;
+      } else if(puzzle.type === 'keycard') {
+        if(player.inventory.includes('keycard')) {
+          puzzle.solved = true;
+          player.inventory = player.inventory.filter(i=>i!=='keycard');
+        }
+      }
+      
+      checkPuzzles();
+      broadcastState();
+    }
+    
+    function shareItem(senderId) {
+      const giver = game.players[senderId];
+      if(!giver || giver.inventory.length===0) return;
+      // give to nearest player
+      for(let pid in game.players) {
+        if(pid===senderId) continue;
+        const other = game.players[pid];
+        if(Math.abs(other.x-giver.x)<=1 && Math.abs(other.y-giver.y)<=1) {
+          const item = giver.inventory.pop();
+          other.inventory.push(item);
           break;
         }
       }
-      if(!keyPlaced) items.push({ type: 'key', x: 3, y: 4, collected: false, owner: null });
-
-      // Switches requiring cooperation (2 players)
-      let switchCount = 1 + Math.floor(difficulty * 4);
-      for (let s=0; s<switchCount; s++) {
-        let placed = false;
-        for (let tries=0; tries<30; tries++) {
-          let sx = 3 + Math.floor(Math.random()*(MAP_COLS-6));
-          let sy = 3 + Math.floor(Math.random()*(MAP_ROWS-6));
-          if (walls[sy][sx] === 0) {
-            switches.push({ x: sx, y: sy, active: false, required: 2, playersOn: 0 });
-            placed = true;
-            break;
-          }
-        }
-      }
-
-      // Doors that open when switches active
-      if (switches.length > 0) {
-        // Place a door near exit or blocking path
-        let doorX = MAP_COLS-4, doorY = MAP_ROWS-4;
-        if (walls[doorY][doorX] === 0) {
-          doors.push({ x: doorX, y: doorY, open: false, requiredSwitches: switches.length });
-        } else {
-          doors.push({ x: 6, y: 6, open: false, requiredSwitches: switches.length });
-        }
-      }
-
-      // make exit active only if key collected & switches active
-      return {
-        walls,
-        items,
-        doors,
-        switches,
-        exit: { x: exitX, y: exitY, active: false },
-        keyRequired: true,
-        winCondition: (state) => {
-          // exit active when key held by someone and all switches active
-          const anyHasKey = Object.values(state.players).some(p => p.hasKey);
-          const allSwitchesActive = state.switches.every(sw => sw.active);
-          state.exit.active = anyHasKey && allSwitchesActive;
-          return state.exit.active;
-        }
-      };
+      broadcastState();
     }
-
-    // Initialize first level
-    let currentLevel = generateLevel(0);
     
-    function loadLevelIntoState(levelIdx) {
-      const newLevel = generateLevel(levelIdx);
-      currentLevel = newLevel;
+    // ---------- LOCAL INPUT ----------
+    function tryMove(dx, dy) {
+      if(!myId || game.win) return;
+      const nx = local.x+dx, ny = local.y+dy;
+      if(!canMove(nx, ny, local)) return;
+      local.x = nx; local.y = ny;
       
-      // Reset players positions to spawn
-      const spawns = [[2,2], [3,2], [2,3]];
-      let idx=0;
-      for (let pid in gameState.players) {
-        let spawn = spawns[idx % spawns.length];
-        gameState.players[pid].x = spawn[0];
-        gameState.players[pid].y = spawn[1];
-        gameState.players[pid].hasKey = false;
-        idx++;
-      }
-      if (localPlayer.id) {
-        localPlayer.x = 2; localPlayer.y = 2;
-        localPlayer.hasKey = false;
-      }
-      
-      gameState.items = JSON.parse(JSON.stringify(newLevel.items));
-      gameState.doors = JSON.parse(JSON.stringify(newLevel.doors));
-      gameState.switches = JSON.parse(JSON.stringify(newLevel.switches));
-      gameState.exit = { ...newLevel.exit };
-      gameState.win = false;
-      gameState.levelIndex = levelIdx;
-      
-      updateUILevel();
-      if (isHost) broadcastGameState();
-    }
-
-    // ---------- PEERJS SETUP ----------
-    function initPeer() {
-      peer = new Peer();
-      peer.on('open', (id) => {
-        myPeerId = id;
-        statusDiv.innerHTML = `🟢 ONLINE · ${id.slice(0,6)}`;
-        console.log('My peer ID:', id);
-      });
-      
-      peer.on('connection', (conn) => {
-        if (!isHost) return; // only host accepts connections
-        setupConnection(conn);
-        // Send current game state to new peer
-        setTimeout(() => {
-          conn.send({ type: 'FULL_STATE', state: gameState, level: currentLevel });
-        }, 200);
-      });
-      
-      peer.on('error', (err) => {
-        statusDiv.innerHTML = `🔴 ERROR: ${err.type}`;
-        console.error(err);
-      });
-    }
-
-    function setupConnection(conn) {
-      const peerId = conn.peer;
-      connections[peerId] = conn;
-      
-      conn.on('data', (data) => handleData(peerId, data));
-      conn.on('close', () => {
-        delete connections[peerId];
-        if (gameState.players[peerId]) {
-          delete gameState.players[peerId];
-          if (isHost) broadcastGameState();
-        }
-        updatePlayerTags();
-      });
-      
-      // Add player slot
-      if (isHost) {
-        const playerCount = Object.keys(gameState.players).length;
-        if (playerCount < 3) {
-          const color = PLAYER_COLORS[playerCount % PLAYER_COLORS.length];
-          const name = PLAYER_NAMES[playerCount % PLAYER_NAMES.length];
-          gameState.players[peerId] = {
-            id: peerId, name, color, x: 2, y: 2, hasKey: false
-          };
-          broadcastGameState();
-        }
-      }
-    }
-
-    function handleData(senderId, data) {
-      if (!isHost && data.type === 'FULL_STATE') {
-        // client receives full sync
-        gameState = data.state;
-        currentLevel = data.level;
-        // update local player from gameState
-        if (gameState.players[myPeerId]) {
-          localPlayer = { ...gameState.players[myPeerId] };
-        }
-        updateUILevel();
-        return;
-      }
-      
-      if (isHost) {
-        // Host handles updates from clients
-        if (data.type === 'MOVE') {
-          const player = gameState.players[senderId];
-          if (player) {
-            const newX = data.x, newY = data.y;
-            if (canMoveTo(newX, newY, player)) {
-              player.x = newX;
-              player.y = newY;
-              checkItemPickup(player);
-              checkSwitches();
-              broadcastGameState();
-            }
-          }
-        } else if (data.type === 'HELP_ACTION') {
-          handleHelpAction(senderId);
-        } else if (data.type === 'REQUEST_RESET') {
-          loadLevelIntoState(gameState.levelIndex);
-        } else if (data.type === 'REQUEST_NEXT') {
-          if (gameState.win) {
-            let nextIdx = (gameState.levelIndex + 1) % 700;
-            loadLevelIntoState(nextIdx);
-          }
-        }
+      if(isHost) {
+        const hostP = game.players[myId];
+        hostP.x = nx; hostP.y = ny;
+        checkPickup(hostP);
+        checkPuzzles();
+        broadcastState();
       } else {
-        // Client receives state patch from host
-        if (data.type === 'STATE_UPDATE') {
-          gameState = data.state;
-          // sync local player
-          if (gameState.players[myPeerId]) {
-            localPlayer = { ...gameState.players[myPeerId] };
-          }
-          updateUILevel();
-        }
+        Object.values(conns).forEach(c => c.send({type:'MOVE', x:nx, y:ny}));
       }
     }
-
-    function broadcastGameState() {
-      if (!isHost) return;
-      const msg = { type: 'STATE_UPDATE', state: gameState };
-      for (let pid in connections) {
-        try { connections[pid].send(msg); } catch(e) {}
-      }
-      // also update local
-      if (gameState.players[myPeerId]) {
-        localPlayer = { ...gameState.players[myPeerId] };
-      }
-    }
-
-    // ---------- GAME LOGIC ----------
-    function canMoveTo(nx, ny, player) {
-      if (nx < 0 || ny < 0 || nx >= MAP_COLS || ny >= MAP_ROWS) return false;
-      if (currentLevel.walls[ny][nx] === 1) return false;
-      // check closed doors
-      for (let d of gameState.doors) {
-        if (!d.open && d.x === nx && d.y === ny) return false;
-      }
-      return true;
-    }
-
-    function checkItemPickup(player) {
-      for (let item of gameState.items) {
-        if (item.type === 'key' && !item.collected && item.x === player.x && item.y === player.y) {
-          item.collected = true;
-          item.owner = player.id;
-          player.hasKey = true;
-        }
-      }
-      // update win condition
-      if (currentLevel.winCondition) {
-        gameState.win = currentLevel.winCondition(gameState);
+    
+    function interact() {
+      if(!myId) return;
+      // find nearby puzzle
+      const puzzleIdx = game.puzzles.findIndex(p => 
+        Math.abs(p.x-local.x)<=1 && Math.abs(p.y-local.y)<=1 && !p.solved
+      );
+      if(puzzleIdx!==-1) {
+        if(isHost) handleInteraction(myId, puzzleIdx);
+        else Object.values(conns).forEach(c => c.send({type:'INTERACT', puzzleIdx}));
       }
     }
-
-    function checkSwitches() {
-      for (let sw of gameState.switches) {
-        let count = 0;
-        for (let pid in gameState.players) {
-          const p = gameState.players[pid];
-          if (p.x === sw.x && p.y === sw.y) count++;
-        }
-        sw.playersOn = count;
-        sw.active = (count >= sw.required);
-      }
-      // update doors based on switches
-      const activeSwitches = gameState.switches.filter(s => s.active).length;
-      for (let d of gameState.doors) {
-        d.open = (activeSwitches >= d.requiredSwitches);
-      }
-      if (currentLevel.winCondition) {
-        gameState.win = currentLevel.winCondition(gameState);
-      }
-    }
-
-    function handleHelpAction(senderId) {
-      // drop key / share
-      const player = gameState.players[senderId];
-      if (player && player.hasKey) {
-        // find another player nearby to give key
-        for (let pid in gameState.players) {
-          if (pid === senderId) continue;
-          const other = gameState.players[pid];
-          if (Math.abs(other.x - player.x) <= 1 && Math.abs(other.y - player.y) <= 1) {
-            player.hasKey = false;
-            other.hasKey = true;
-            // update item owner
-            const keyItem = gameState.items.find(it => it.type==='key');
-            if (keyItem) keyItem.owner = other.id;
-            broadcastGameState();
-            break;
-          }
-        }
-      }
-    }
-
-    // ---------- INPUT & RENDER ----------
-    function handleLocalMove(dx, dy) {
-      if (!myPeerId || gameState.win) return;
-      const newX = localPlayer.x + dx;
-      const newY = localPlayer.y + dy;
-      if (!canMoveTo(newX, newY, localPlayer)) return;
-      
-      localPlayer.x = newX;
-      localPlayer.y = newY;
-      
-      if (isHost) {
-        // host updates directly
-        const hostPlayer = gameState.players[myPeerId];
-        if (hostPlayer) {
-          hostPlayer.x = newX; hostPlayer.y = newY;
-          checkItemPickup(hostPlayer);
-          checkSwitches();
-          broadcastGameState();
-        }
-      } else {
-        // send move to host
-        for (let pid in connections) {
-          try { connections[pid].send({ type: 'MOVE', x: newX, y: newY }); } catch(e) {}
-        }
-      }
-    }
-
+    
+    // ---------- RENDERING (juicy!) ----------
     function draw() {
-      ctx.clearRect(0,0,720,480);
-      
-      // Draw tiles
-      for (let r=0; r<MAP_ROWS; r++) {
-        for (let c=0; c<MAP_COLS; c++) {
-          let x = c*TILE_SIZE, y = r*TILE_SIZE;
-          if (currentLevel.walls[r][c] === 1) {
-            ctx.fillStyle = '#3a2e1f';
-            ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
-            ctx.fillStyle = '#5d4a2e';
-            ctx.fillRect(x+2,y+2,TILE_SIZE-4,TILE_SIZE-4);
+      ctx.clearRect(0,0,800,500);
+      // tiles
+      for(let r=0; r<ROWS; r++) {
+        for(let c=0; c<COLS; c++) {
+          let x=c*TILE, y=r*TILE;
+          if(currentLevelData.walls[r][c]===1) {
+            ctx.fillStyle='#3a2c1c';
+            ctx.fillRect(x,y,TILE,TILE);
+            ctx.fillStyle='#5d4a32';
+            ctx.fillRect(x+2,y+2,TILE-4,TILE-4);
           } else {
-            ctx.fillStyle = '#1e2a3a';
-            ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
-            ctx.fillStyle = '#2f405b';
-            ctx.fillRect(x+1,y+1,TILE_SIZE-2,TILE_SIZE-2);
+            ctx.fillStyle='#1e3340';
+            ctx.fillRect(x,y,TILE,TILE);
+            ctx.fillStyle='#2f4a5c';
+            ctx.fillRect(x+1,y+1,TILE-2,TILE-2);
           }
         }
       }
       
-      // Draw switches
-      for (let sw of gameState.switches) {
-        let x = sw.x*TILE_SIZE, y = sw.y*TILE_SIZE;
-        ctx.fillStyle = sw.active ? '#a5d6ff' : '#6d8aaf';
-        ctx.beginPath();
-        ctx.arc(x+TILE_SIZE/2, y+TILE_SIZE/2, 12, 0, 2*Math.PI);
-        ctx.fill();
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 14px monospace';
-        ctx.fillText(`${sw.playersOn}/${sw.required}`, x+10, y+26);
-      }
-      
-      // Draw doors
-      for (let d of gameState.doors) {
-        if (d.open) continue;
-        let x = d.x*TILE_SIZE, y = d.y*TILE_SIZE;
-        ctx.fillStyle = '#8b5e3c';
-        ctx.fillRect(x+5,y+5,TILE_SIZE-10,TILE_SIZE-10);
-        ctx.fillStyle = '#b57e4c';
-        ctx.fillRect(x+8,y+8,TILE_SIZE-16,TILE_SIZE-16);
-      }
-      
-      // Draw items (key)
-      for (let item of gameState.items) {
-        if (item.type==='key' && !item.collected) {
-          let x = item.x*TILE_SIZE, y = item.y*TILE_SIZE;
-          ctx.fillStyle = '#FFD966';
-          ctx.beginPath();
-          ctx.ellipse(x+20, y+16, 8, 12, 0, 0, Math.PI*2);
-          ctx.fill();
-          ctx.fillStyle = '#B8860B';
-          ctx.beginPath();
-          ctx.arc(x+24, y+12, 5, 0, 2*Math.PI);
-          ctx.fill();
+      // puzzles
+      game.puzzles.forEach((p,i) => {
+        let x=p.x*TILE, y=p.y*TILE;
+        if(p.type==='code') {
+          ctx.fillStyle = p.solved ? '#6f9' : '#7a9bb5';
+          ctx.fillRect(x+5,y+5,30,30);
+          ctx.fillStyle='black'; ctx.font='bold 14px monospace'; ctx.fillText('🔢',x+10,y+26);
+        } else if(p.type==='lever') {
+          ctx.fillStyle = p.solved ? '#adff8c' : '#b58a6f';
+          ctx.beginPath(); ctx.arc(x+20,y+20,14,0,2*Math.PI); ctx.fill();
+          ctx.fillStyle='white'; ctx.fillText('🎚️',x+12,y+27);
+        } else if(p.type==='keycard') {
+          ctx.fillStyle = p.solved ? '#a0e0a0' : '#a57c6c';
+          ctx.fillRect(x+8,y+8,24,24);
+          ctx.fillStyle='black'; ctx.fillText('🪪',x+14,y+28);
+        } else if(p.type==='weight') {
+          ctx.fillStyle = p.solved ? '#c0e080' : '#8f9e8f';
+          ctx.beginPath(); ctx.arc(x+20,y+20,12,0,2*Math.PI); ctx.fill();
+          ctx.fillText('⚖️',x+12,y+28);
         }
-      }
+      });
       
-      // Draw exit
-      const ex = gameState.exit;
-      ctx.fillStyle = gameState.exit.active ? '#7ef07e' : '#5a7a5a';
-      ctx.fillRect(ex.x*TILE_SIZE+8, ex.y*TILE_SIZE+8, 24,24);
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 16px monospace';
-      ctx.fillText('🚪', ex.x*TILE_SIZE+12, ex.y*TILE_SIZE+30);
+      // items
+      game.items.filter(i=>!i.collected).forEach(it => {
+        let x=it.x*TILE, y=it.y*TILE;
+        ctx.fillStyle = it.type==='key'?'#FFD966':(it.type==='keycard'?'#b0c4de':'#c19a6b');
+        ctx.beginPath(); ctx.arc(x+20,y+20,10,0,2*Math.PI); ctx.fill();
+        ctx.fillStyle='black'; ctx.fillText(it.type[0].toUpperCase(),x+16,y+26);
+      });
       
-      // Draw players
-      for (let pid in gameState.players) {
-        const p = gameState.players[pid];
+      // doors
+      game.doors.filter(d=>!d.open).forEach(d => {
+        let x=d.x*TILE, y=d.y*TILE;
+        ctx.fillStyle='#6b4f32'; ctx.fillRect(x+4,y+4,32,32);
+        ctx.fillStyle='#9b7e5a'; ctx.fillRect(x+8,y+8,24,24);
+        ctx.fillStyle='white'; ctx.fillText('🚪',x+12,y+30);
+      });
+      
+      // exit
+      const ex = game.exit;
+      ctx.fillStyle = ex.open ? '#b3ffaa' : '#5f735f';
+      ctx.fillRect(ex.x*TILE+8, ex.y*TILE+8, 24,24);
+      ctx.fillStyle='white'; ctx.font='bold 20px sans'; ctx.fillText('🏁',ex.x*TILE+12,ex.y*TILE+30);
+      
+      // players
+      for(let pid in game.players) {
+        const p = game.players[pid];
         ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x*TILE_SIZE+20, p.y*TILE_SIZE+20, 14, 0, 2*Math.PI);
-        ctx.fill();
-        ctx.strokeStyle = '#fff3d1';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 12px monospace';
-        ctx.fillText(p.name, p.x*TILE_SIZE+10, p.y*TILE_SIZE+10);
-        if (p.hasKey) {
-          ctx.fillStyle = '#FFD966';
-          ctx.beginPath();
-          ctx.arc(p.x*TILE_SIZE+28, p.y*TILE_SIZE+8, 6, 0, 2*Math.PI);
-          ctx.fill();
+        ctx.shadowColor = '#fff6'; ctx.shadowBlur = 12;
+        ctx.beginPath(); ctx.arc(p.x*TILE+20, p.y*TILE+20, 16, 0, 2*Math.PI); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke();
+        ctx.fillStyle='white'; ctx.font='bold 12px monospace'; 
+        ctx.fillText(p.name, p.x*TILE+10, p.y*TILE+10);
+        if(p.inventory?.length) {
+          ctx.fillStyle='#FFD966'; ctx.beginPath(); ctx.arc(p.x*TILE+30,p.y*TILE+8,7,0,2*Math.PI); ctx.fill();
         }
       }
       
-      if (gameState.win) {
-        ctx.fillStyle = '#f9e076';
-        ctx.font = 'bold 28px monospace';
-        ctx.fillText('🏆 ESCAPED!', 240, 240);
-      }
+      // inventory UI
+      invDisplay.innerText = local.inventory?.length ? local.inventory.join(' · ') : 'Empty';
+      lvlDisplay.innerText = `🏁 LVL ${game.level+1}`;
       
-      updatePlayerTags();
+      if(game.win) {
+        ctx.fillStyle='#fad98b'; ctx.font='bold 32px monospace'; 
+        ctx.fillText('✨ ESCAPED! ✨', 200, 200);
+      }
       requestAnimationFrame(draw);
     }
-
-    function updatePlayerTags() {
-      let html = '';
-      for (let pid in gameState.players) {
-        const p = gameState.players[pid];
-        html += `<div class="player-tag"><span class="color-dot" style="background:${p.color}"></span>${p.name} ${p.hasKey?'🔑':''}</div>`;
-      }
-      playerTagsDiv.innerHTML = html || '<span style="opacity:0.7">waiting...</span>';
-    }
-
-    function updateUILevel() {
-      levelDisplay.innerText = `LVL ${gameState.levelIndex+1}`;
-    }
-
+    
+    function updateUI() { /* already in draw */ }
+    
     // ---------- EVENT LISTENERS ----------
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' || e.key === 'w') handleLocalMove(0, -1);
-      if (e.key === 'ArrowDown' || e.key === 's') handleLocalMove(0, 1);
-      if (e.key === 'ArrowLeft' || e.key === 'a') handleLocalMove(-1, 0);
-      if (e.key === 'ArrowRight'|| e.key === 'd') handleLocalMove(1, 0);
-      e.preventDefault();
+    window.addEventListener('keydown', e => {
+      if(e.key === 'ArrowUp'||e.key==='w') { tryMove(0,-1); e.preventDefault(); }
+      if(e.key === 'ArrowDown'||e.key==='s') { tryMove(0,1); e.preventDefault(); }
+      if(e.key === 'ArrowLeft'||e.key==='a') { tryMove(-1,0); e.preventDefault(); }
+      if(e.key === 'ArrowRight'||e.key==='d') { tryMove(1,0); e.preventDefault(); }
+      if(e.key === 'e' || e.key === 'E') { interact(); e.preventDefault(); }
     });
     
-    hostBtn.addEventListener('click', () => {
-      roomId = roomInput.value.trim() || 'ESCAPE3';
-      if (peer) peer.destroy();
+    document.getElementById('hostBtn').onclick = () => {
+      room = roomInput.value.trim()||'FUN700';
+      if(peer) peer.destroy();
       initPeer();
       isHost = true;
-      statusDiv.innerHTML = `🟡 HOST · ${roomId}`;
-      
-      // Initialize game as host
-      gameState = { levelIndex: 0, players: {}, items: [], doors: [], switches: [], exit:{x:16,y:10}, win:false };
-      localPlayer.id = myPeerId;
-      localPlayer.color = PLAYER_COLORS[0];
-      localPlayer.name = 'Host';
-      gameState.players[myPeerId] = { id: myPeerId, name:'Host', color:PLAYER_COLORS[0], x:2,y:2,hasKey:false };
-      loadLevelIntoState(0);
-    });
+      connStatus.innerText = `👑 HOST · ${room}`;
+      local.id = myId; local.color = PLAYER_COLORS[0]; local.name = 'HOST';
+      game.players = { [myId]: { id:myId, name:'HOST', color:PLAYER_COLORS[0], x:2,y:2,inventory:[] } };
+      loadLevel(0);
+    };
     
-    joinBtn.addEventListener('click', () => {
-      roomId = roomInput.value.trim();
-      if (!roomId) return;
-      if (peer) peer.destroy();
+    document.getElementById('joinBtn').onclick = () => {
+      room = roomInput.value.trim();
+      if(!room) return;
+      if(peer) peer.destroy();
       initPeer();
       isHost = false;
-      peer.on('open', (id) => {
-        const conn = peer.connect(roomId, { reliable: true });
-        setupConnection(conn);
-        connections[roomId] = conn;
-        statusDiv.innerHTML = `🔵 JOINED · ${roomId}`;
+      peer.on('open', () => {
+        const conn = peer.connect(room, {reliable:true});
+        conns[room] = conn;
+        conn.on('data', d => handleData(room, d));
+        conn.on('open', () => connStatus.innerText = `🔵 JOINED ${room}`);
       });
-    });
+    };
     
-    helpBtn.addEventListener('click', () => {
-      if (!myPeerId) return;
-      if (isHost) {
-        handleHelpAction(myPeerId);
-      } else {
-        for (let pid in connections) {
-          connections[pid].send({ type: 'HELP_ACTION' });
-        }
-      }
-    });
+    document.getElementById('interactBtn').onclick = interact;
+    document.getElementById('shareItemBtn').onclick = () => {
+      if(isHost) shareItem(myId);
+      else Object.values(conns).forEach(c => c.send({type:'SHARE'}));
+    };
+    document.getElementById('resetBtn').onclick = () => {
+      if(isHost) loadLevel(game.level);
+      else Object.values(conns).forEach(c => c.send({type:'RESET'}));
+    };
+    document.getElementById('nextBtn').onclick = () => {
+      if(!game.win) { hintEl.innerText='🚫 Solve all puzzles first!'; return; }
+      if(isHost) loadLevel((game.level+1)%700);
+      else Object.values(conns).forEach(c => c.send({type:'NEXT'}));
+    };
     
-    resetBtn.addEventListener('click', () => {
-      if (isHost) {
-        loadLevelIntoState(gameState.levelIndex);
-      } else {
-        for (let pid in connections) connections[pid].send({ type: 'REQUEST_RESET' });
-      }
-    });
-    
-    nextBtn.addEventListener('click', () => {
-      if (!gameState.win) return alert('Finish level first!');
-      if (isHost) {
-        let next = (gameState.levelIndex + 1) % 700;
-        loadLevelIntoState(next);
-      } else {
-        for (let pid in connections) connections[pid].send({ type: 'REQUEST_NEXT' });
-      }
-    });
-
-    // Start drawing
+    // start
+    initPeer();
+    currentLevelData = buildLevel(0);
+    game.players = {};
     requestAnimationFrame(draw);
-    initPeer(); // start with default peer
   })();
 </script>
 </body>
