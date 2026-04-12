@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>🤝 3‑PLAYER ESCAPE · TOUCH & PLAY</title>
+  <title>👥 ESCAPE TOGETHER · 3 PLAYER PUZZLES</title>
   <style>
     * {
       box-sizing: border-box;
@@ -13,17 +13,17 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: #0c1a26;
+      background: #0b1c26;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 8px;
     }
     .game-container {
-      background: #132c3b;
-      border-radius: 36px;
-      padding: 16px 12px 20px;
-      box-shadow: 0 20px 30px rgba(0,0,0,0.7), inset 0 0 0 2px #3e7b8f;
+      background: #12303f;
+      border-radius: 40px;
+      padding: 16px 12px 24px;
+      box-shadow: 0 20px 30px rgba(0,0,0,0.7), inset 0 0 0 3px #3b7a8f;
       max-width: 800px;
       width: 100%;
     }
@@ -32,53 +32,54 @@
       margin: 0 auto;
       width: 100%;
       height: auto;
-      border-radius: 24px;
-      background: #1b3a48;
-      box-shadow: inset 0 0 0 3px #2b5f72, 0 0 0 3px #1d4455;
-      touch-action: none;  /* prevent scrolling while touching canvas */
+      border-radius: 28px;
+      background: #1b3f50;
+      box-shadow: inset 0 0 0 3px #2b6176, 0 0 0 3px #1d485c;
+      touch-action: none;
     }
-    .status-row {
+    .top-panel {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      margin: 12px 4px 8px;
-      color: #f2e5c6;
+      margin: 16px 4px 10px;
+      color: #f5e5c9;
     }
-    .badge {
-      background: #1b4457;
-      padding: 8px 18px;
-      border-radius: 40px;
+    .room-card {
+      background: #1b4459;
+      padding: 10px 20px;
+      border-radius: 48px;
       font-weight: bold;
-      border-left: 5px solid #f5c56b;
-      box-shadow: inset 0 1px 4px #0e232e, 0 4px 0 #0b1f28;
-      font-size: 0.9rem;
+      border-left: 6px solid #f3c26b;
+      box-shadow: inset 0 2px 5px #0e2938, 0 5px 0 #0c212c;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
     }
-    .player-tag {
+    .player-badge {
       display: inline-flex;
       align-items: center;
-      background: #1f3e50;
-      padding: 5px 14px;
+      background: #1d4052;
+      padding: 6px 16px;
       border-radius: 30px;
-      margin: 2px 4px;
-      border: 1px solid #75b2c9;
+      margin: 4px;
+      border: 1px solid #7fb7cc;
     }
     .color-dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 6px;
-      margin-right: 8px;
+      width: 18px;
+      height: 18px;
+      border-radius: 8px;
+      margin-right: 10px;
     }
     button {
-      background: #2b5b72;
+      background: #2b5e77;
       border: none;
-      color: #f7efdb;
+      color: #faf0db;
       font-weight: bold;
-      padding: 12px 18px;
-      margin: 4px 4px;
-      border-radius: 48px;
+      padding: 14px 20px;
+      margin: 4px;
+      border-radius: 50px;
       font-size: 1rem;
-      box-shadow: 0 5px 0 #14303e, 0 3px 8px black;
+      box-shadow: 0 5px 0 #133544, 0 3px 8px black;
       border-bottom: 2px solid #eebb55;
       transition: all 0.05s;
       cursor: pointer;
@@ -87,125 +88,109 @@
     }
     button:active {
       transform: translateY(4px);
-      box-shadow: 0 1px 0 #14303e, 0 2px 6px black;
+      box-shadow: 0 1px 0 #133544, 0 2px 6px black;
     }
     button.gold {
-      background: #d9992a;
-      border-bottom-color: #ffe094;
+      background: #da9727;
+      border-bottom-color: #ffe5a3;
       color: #0a1c26;
       font-weight: 900;
     }
     .touch-panel {
       display: flex;
       justify-content: center;
-      gap: 20px;
+      gap: 15px;
       margin: 16px 0 10px;
     }
-    .direction-pad {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    .dir-row {
-      display: flex;
-      gap: 12px;
-      margin: 4px;
-    }
     .dir-btn {
-      background: #1e4458;
-      width: 70px;
-      height: 70px;
+      background: #1e4a5e;
+      width: 80px;
+      height: 80px;
       border-radius: 30px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 36px;
+      font-size: 42px;
       font-weight: bold;
       color: #fad98b;
-      box-shadow: 0 6px 0 #0d262f, 0 4px 8px black;
+      box-shadow: 0 8px 0 #0d2936, 0 4px 8px black;
       border-bottom: 3px solid #eebb55;
       touch-action: manipulation;
       cursor: pointer;
       user-select: none;
     }
     .dir-btn:active {
-      transform: translateY(5px);
-      box-shadow: 0 1px 0 #0d262f, 0 2px 6px black;
+      transform: translateY(6px);
+      box-shadow: 0 2px 0 #0d2936, 0 2px 6px black;
     }
-    .action-buttons {
+    .action-row {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .hint-area {
+      background: #143544;
+      padding: 14px 20px;
+      border-radius: 48px;
+      margin-top: 16px;
+      color: #d1e7f5;
+      font-weight: 500;
+      text-align: center;
+      font-size: 1rem;
+      border: 1px solid #5997ae;
     }
     input {
-      background: #1c3d4f;
-      border: 2px solid #48849b;
-      padding: 12px 16px;
+      background: #1c4255;
+      border: 2px solid #4b8fa8;
+      padding: 14px 18px;
       border-radius: 48px;
       color: #ffefcf;
       font-weight: bold;
       font-size: 1rem;
-      width: 140px;
+      width: 150px;
       text-align: center;
       outline: none;
     }
-    .room-section {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .hint-box {
-      background: #142f3f;
-      padding: 12px 18px;
-      border-radius: 40px;
-      margin-top: 12px;
-      color: #cde3f0;
-      font-weight: 500;
-      text-align: center;
-    }
   </style>
-  <!-- PeerJS -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 <div class="game-container">
   <canvas id="gameCanvas" width="720" height="480"></canvas>
   
-  <div class="status-row">
-    <div class="badge" id="connectionText">🔘 OFFLINE</div>
-    <div class="badge" id="levelText">🏆 LVL 1</div>
-    <div id="playerList" style="display:flex; flex-wrap:wrap;"></div>
+  <div class="top-panel">
+    <div class="room-card" id="roomDisplay">🔘 OFFLINE</div>
+    <div class="room-card" id="levelDisplay">🏆 LVL 1</div>
+    <div id="playerTags" style="display:flex; flex-wrap:wrap;"></div>
   </div>
   
-  <!-- Touch controls (iPad friendly) -->
+  <!-- Touch D-Pad (iPad friendly) -->
   <div class="touch-panel">
-    <div class="direction-pad">
-      <div class="dir-row"><div class="dir-btn" id="btnUp">⬆️</div></div>
-      <div class="dir-row">
-        <div class="dir-btn" id="btnLeft">⬅️</div>
-        <div class="dir-btn" id="btnDown">⬇️</div>
-        <div class="dir-btn" id="btnRight">➡️</div>
-      </div>
-    </div>
+    <div class="dir-btn" id="btnUp">⬆️</div>
+  </div>
+  <div style="display:flex; justify-content:center; gap:20px;">
+    <div class="dir-btn" id="btnLeft">⬅️</div>
+    <div class="dir-btn" id="btnDown">⬇️</div>
+    <div class="dir-btn" id="btnRight">➡️</div>
   </div>
   
-  <div style="display:flex; flex-wrap:wrap; justify-content: space-between; align-items:center;">
-    <div class="room-section">
-      <input id="roomIdInput" placeholder="Room ID" value="COOP700" maxlength="20">
-      <button id="hostBtn" class="gold">🎮 HOST</button>
-      <button id="joinBtn">🔗 JOIN</button>
-    </div>
-    <div class="action-buttons">
-      <button id="interactBtn">🖐️ INTERACT</button>
-      <button id="shareBtn">🤝 SHARE</button>
-      <button id="resetBtn">🔄 RESET</button>
-      <button id="nextBtn">⏩ NEXT</button>
-    </div>
+  <div style="display:flex; flex-wrap:wrap; justify-content: center; margin: 12px 0;">
+    <input id="joinRoomInput" placeholder="Enter room code" maxlength="20">
+    <button id="hostBtn" class="gold">🎮 CREATE ROOM</button>
+    <button id="joinBtn">🔗 JOIN ROOM</button>
   </div>
   
-  <div class="hint-box" id="hintMessage">
-    👥 Host creates room · Others join with same code · Work together!
+  <div class="action-row">
+    <button id="interactBtn">🖐️ INTERACT</button>
+    <button id="shareBtn">🤝 SHARE ITEM</button>
+    <button id="resetBtn">🔄 RESET</button>
+    <button id="nextBtn">⏩ NEXT LEVEL</button>
+  </div>
+  
+  <div class="hint-area" id="hintMessage">
+    👥 Tap 'CREATE ROOM' to start — share the code with 2 friends!
   </div>
 </div>
 
@@ -214,138 +199,113 @@
     "use strict";
     
     // ---------- CONFIG ----------
-    const TILE_SIZE = 40;
-    const MAP_COLS = 18;   // 720px
-    const MAP_ROWS = 12;   // 480px
+    const TILE = 40;
+    const COLS = 18, ROWS = 12;
     const COLORS = ['#FF8BA7', '#6CC0FF', '#A3D977'];
-    const NAMES = ['ACE', 'BUDDY', 'COREY'];
+    const NAMES = ['ALEX', 'BLAKE', 'CASEY'];
     
-    // Global state
+    // Peer & state
     let peer = null;
     let connections = {};
-    let myPeerId = '';
+    let myId = '';
     let isHost = false;
-    let roomCode = 'COOP700';
+    let currentRoom = '';
     
-    // Game state (host authoritative)
-    let gameState = {
+    // Game state (host is source of truth)
+    let game = {
       level: 0,
-      players: {},        // peerId -> { id, name, color, x, y, inventory }
-      items: [],           // { type, x, y, collected }
-      puzzles: [],         // interactive puzzles
+      players: {},       // id -> { name, color, x, y, inventory }
+      items: [],          // {type, x, y, collected}
+      puzzles: [],
       doors: [],
-      exit: { x: 16, y: 10, open: false },
+      exit: { x:16, y:10, open:false },
       win: false,
     };
     
-    let localPlayer = {
-      id: '', name: 'You', color: '#ccc', x: 2, y: 2, inventory: []
-    };
-    
-    let currentLevel = null; // { walls, puzzles, items, doors, exit }
+    let local = { id:'', name:'You', color:'#ccc', x:2, y:2, inventory:[] };
+    let levelData = null; // walls etc.
     
     // UI elements
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const connText = document.getElementById('connectionText');
-    const levelText = document.getElementById('levelText');
-    const playerListDiv = document.getElementById('playerList');
-    const hintBox = document.getElementById('hintMessage');
-    const roomInput = document.getElementById('roomIdInput');
+    const roomDisplay = document.getElementById('roomDisplay');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const playerTags = document.getElementById('playerTags');
+    const hintMsg = document.getElementById('hintMessage');
+    const joinInput = document.getElementById('joinRoomInput');
     
-    // ---------- LEVEL GENERATOR (FUN & COOPERATIVE) ----------
-    function generateLevel(levelIndex) {
-      const walls = Array(MAP_ROWS).fill().map(() => Array(MAP_COLS).fill(0));
-      // border
-      for(let r=0; r<MAP_ROWS; r++) for(let c=0; c<MAP_COLS; c++) 
-        if(r===0||r===MAP_ROWS-1||c===0||c===MAP_COLS-1) walls[r][c]=1;
+    // ---------- LEVEL GENERATOR (FUN PUZZLES) ----------
+    function generateLevel(idx) {
+      const walls = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+      for(let r=0; r<ROWS; r++) for(let c=0; c<COLS; c++) 
+        if(r===0||r===ROWS-1||c===0||c===COLS-1) walls[r][c]=1;
       
-      // inner walls (simple maze)
-      for(let r=2; r<MAP_ROWS-2; r+=2) {
-        for(let c=2; c<MAP_COLS-2; c+=2) {
+      // simple inner walls
+      for(let r=2; r<ROWS-2; r+=2)
+        for(let c=2; c<COLS-2; c+=2)
           if(Math.random()<0.3) walls[r][c] = 1;
-        }
-      }
-      // clear spawn
+      
       walls[2][2]=0; walls[2][3]=0; walls[3][2]=0;
       
-      // Items: key, keycard, etc.
-      const items = [];
-      items.push({ type: 'key', x: 5, y: 3, collected: false });
-      if(levelIndex>5) items.push({ type: 'keycard', x: 8, y: 4, collected: false });
-      
-      // PUZZLES (cooperative!)
-      const puzzles = [];
-      
-      // 1. Pressure plate (needs 2 players)
-      puzzles.push({
-        type: 'pressure', x: 7, y: 5, solved: false,
-        requiredPlayers: 2, playersOn: 0
-      });
-      
-      // 2. Lever puzzle (two levers, need to pull simultaneously)
-      puzzles.push({
-        type: 'dualLever', levers: [
-          { x: 10, y: 6, active: false },
-          { x: 12, y: 6, active: false }
-        ], solved: false
-      });
-      
-      // 3. Code panel (hint displayed)
-      const code = (100 + Math.floor(Math.random()*400)).toString();
-      puzzles.push({
-        type: 'code', x: 14, y: 7, solved: false,
-        code: code, hint: `🔢 CODE: ${code}`
-      });
-      
-      // Door that requires puzzles solved
-      const doors = [
-        { x: 15, y: 8, open: false, required: 2 }  // need 2 puzzles solved
+      const items = [
+        { type:'key', x:5, y:3, collected:false },
+        { type:'keycard', x:8, y:4, collected:false }
       ];
       
-      const exit = { x: 16, y: 10, open: false };
+      // Cooperative puzzles
+      const puzzles = [
+        { type:'pressure', x:7, y:5, solved:false, required:2, playersOn:0 },
+        { type:'code', x:11, y:6, solved:false, code: (100+Math.floor(Math.random()*400)).toString(), hint:'' },
+        { type:'lever', levers:[ {x:13,y:7,active:false}, {x:14,y:7,active:false} ], solved:false }
+      ];
+      
+      const doors = [ { x:15, y:8, open:false, required:2 } ];
+      const exit = { x:16, y:10, open:false };
       
       return { walls, items, puzzles, doors, exit };
     }
     
     function loadLevel(levelIdx) {
-      currentLevel = generateLevel(levelIdx);
-      gameState.level = levelIdx;
-      gameState.items = JSON.parse(JSON.stringify(currentLevel.items));
-      gameState.puzzles = JSON.parse(JSON.stringify(currentLevel.puzzles));
-      gameState.doors = JSON.parse(JSON.stringify(currentLevel.doors));
-      gameState.exit = { ...currentLevel.exit, open: false };
-      gameState.win = false;
+      levelData = generateLevel(levelIdx);
+      game.level = levelIdx;
+      game.items = JSON.parse(JSON.stringify(levelData.items));
+      game.puzzles = JSON.parse(JSON.stringify(levelData.puzzles));
+      game.doors = JSON.parse(JSON.stringify(levelData.doors));
+      game.exit = { ...levelData.exit, open:false };
+      game.win = false;
       
-      // reset player positions to spawn
-      const spawns = [[2,2], [3,2], [2,3]];
+      const spawns = [[2,2],[3,2],[2,3]];
       let i=0;
-      for(let pid in gameState.players) {
-        const sp = spawns[i%3];
-        gameState.players[pid].x = sp[0];
-        gameState.players[pid].y = sp[1];
-        gameState.players[pid].inventory = [];
+      for(let pid in game.players) {
+        let sp = spawns[i%3];
+        game.players[pid].x = sp[0];
+        game.players[pid].y = sp[1];
+        game.players[pid].inventory = [];
         i++;
       }
-      if(localPlayer.id) {
-        localPlayer.x = 2; localPlayer.y = 2;
-        localPlayer.inventory = [];
-      }
+      if(local.id) { local.x=2; local.y=2; local.inventory=[]; }
       
       updateUI();
-      if(isHost) broadcastGameState();
+      if(isHost) broadcastState();
     }
     
-    // ---------- PEERJS ----------
+    // ---------- PEERJS (ZOOM-STYLE ROOM) ----------
     function initPeer() {
       if(peer) peer.destroy();
       peer = new Peer();
       
       peer.on('open', (id) => {
-        myPeerId = id;
-        connText.innerText = `🟢 ${id.substring(0,6)}`;
-        if(!isHost) {
-          localPlayer.id = myPeerId;
+        myId = id;
+        if(isHost) {
+          currentRoom = id;  // use peer ID as room code
+          roomDisplay.innerText = `🏷️ ROOM: ${currentRoom}`;
+          hintMsg.innerText = `✅ Room created! Share this code: ${currentRoom}`;
+          // Host initializes own player
+          local = { id: myId, name:'HOST', color:COLORS[0], x:2, y:2, inventory:[] };
+          game.players = { [myId]: local };
+          loadLevel(0);
+        } else {
+          roomDisplay.innerText = `🔵 JOINING...`;
         }
       });
       
@@ -354,25 +314,23 @@
         connections[conn.peer] = conn;
         setupConnection(conn);
         
-        // assign player slot
-        const playerCount = Object.keys(gameState.players).length;
-        if(playerCount < 3) {
-          const color = COLORS[playerCount];
-          const name = NAMES[playerCount];
-          gameState.players[conn.peer] = {
-            id: conn.peer, name, color, x: 2, y: 2, inventory: []
-          };
-          broadcastGameState();
+        // Add player slot (max 3)
+        const count = Object.keys(game.players).length;
+        if(count < 3) {
+          const name = NAMES[count] || 'GUEST';
+          const color = COLORS[count % COLORS.length];
+          game.players[conn.peer] = { id: conn.peer, name, color, x:2, y:2, inventory:[] };
         }
-        // send full state to new player
+        // Send full sync to new player
         setTimeout(() => {
-          conn.send({ type: 'FULL_SYNC', gameState, currentLevel });
+          conn.send({ type:'FULL_SYNC', game, levelData });
         }, 200);
+        broadcastState();
       });
       
       peer.on('error', (err) => {
-        connText.innerText = `🔴 ${err.type}`;
-        hintBox.innerText = `❌ Connection error. Refresh and try again.`;
+        roomDisplay.innerText = `❌ ERROR`;
+        hintMsg.innerText = `Connection error: ${err.type}. Try again.`;
       });
     }
     
@@ -380,396 +338,333 @@
       conn.on('data', (data) => handleData(conn.peer, data));
       conn.on('close', () => {
         delete connections[conn.peer];
-        if(gameState.players[conn.peer]) {
-          delete gameState.players[conn.peer];
-          if(isHost) broadcastGameState();
+        if(game.players[conn.peer]) {
+          delete game.players[conn.peer];
+          if(isHost) broadcastState();
         }
-        updatePlayerList();
+        updatePlayerTags();
       });
     }
     
-    function handleData(senderId, data) {
+    function handleData(sender, data) {
       if(!isHost && data.type === 'FULL_SYNC') {
-        gameState = data.gameState;
-        currentLevel = data.currentLevel;
-        if(gameState.players[myPeerId]) {
-          localPlayer = { ...gameState.players[myPeerId] };
-        }
+        game = data.game;
+        levelData = data.levelData;
+        if(game.players[myId]) local = { ...game.players[myId] };
         updateUI();
-        return;
+        hintMsg.innerText = `🎮 Connected! Cooperate to escape.`;
       }
-      
-      if(isHost) {
+      else if(isHost) {
         if(data.type === 'MOVE') {
-          const player = gameState.players[senderId];
-          if(player && canMoveTo(data.x, data.y, player)) {
-            player.x = data.x; player.y = data.y;
-            checkItemPickup(player);
+          const p = game.players[sender];
+          if(p && canMove(data.x, data.y, p)) {
+            p.x = data.x; p.y = data.y;
+            checkPickup(p);
             checkPuzzles();
-            checkWinCondition();
-            broadcastGameState();
+            broadcastState();
           }
         } else if(data.type === 'INTERACT') {
-          handleInteraction(senderId, data.puzzleIndex);
+          handleInteraction(sender, data.puzzleIdx);
         } else if(data.type === 'SHARE') {
-          shareItem(senderId);
+          shareItem(sender);
         } else if(data.type === 'RESET') {
-          loadLevel(gameState.level);
+          loadLevel(game.level);
         } else if(data.type === 'NEXT') {
-          if(gameState.win) loadLevel((gameState.level+1)%700);
+          if(game.win) loadLevel((game.level+1)%700);
         }
       } else {
-        if(data.type === 'STATE_UPDATE') {
-          gameState = data.gameState;
-          if(gameState.players[myPeerId]) {
-            localPlayer = { ...gameState.players[myPeerId] };
-          }
+        if(data.type === 'STATE') {
+          game = data.game;
+          if(game.players[myId]) local = { ...game.players[myId] };
           updateUI();
         }
       }
     }
     
-    function broadcastGameState() {
+    function broadcastState() {
       if(!isHost) return;
-      const msg = { type: 'STATE_UPDATE', gameState };
+      const msg = { type:'STATE', game };
       Object.values(connections).forEach(c => c.send(msg));
-      updatePlayerList();
+      updatePlayerTags();
     }
     
     // ---------- GAME LOGIC ----------
-    function canMoveTo(nx, ny, player) {
-      if(nx<0||ny<0||nx>=MAP_COLS||ny>=MAP_ROWS) return false;
-      if(currentLevel.walls[ny][nx] === 1) return false;
-      for(let d of gameState.doors) {
-        if(!d.open && d.x === nx && d.y === ny) return false;
-      }
+    function canMove(nx, ny, player) {
+      if(nx<0||ny<0||nx>=COLS||ny>=ROWS) return false;
+      if(levelData.walls[ny][nx] === 1) return false;
+      for(let d of game.doors) if(!d.open && d.x===nx && d.y===ny) return false;
       return true;
     }
     
-    function checkItemPickup(player) {
-      for(let item of gameState.items) {
-        if(!item.collected && item.x === player.x && item.y === player.y) {
+    function checkPickup(player) {
+      game.items.forEach(item => {
+        if(!item.collected && item.x===player.x && item.y===player.y) {
           item.collected = true;
           player.inventory.push(item.type);
-          hintBox.innerText = `✅ ${player.name} picked up ${item.type}!`;
+          hintMsg.innerText = `✅ ${player.name} picked up ${item.type}!`;
         }
-      }
+      });
     }
     
     function checkPuzzles() {
-      // Pressure plate
-      gameState.puzzles.forEach(p => {
-        if(p.type === 'pressure' && !p.solved) {
-          let count = 0;
-          for(let pid in gameState.players) {
-            const pl = gameState.players[pid];
-            if(pl.x === p.x && pl.y === p.y) count++;
-          }
-          p.playersOn = count;
-          if(count >= p.requiredPlayers) {
-            p.solved = true;
-            hintBox.innerText = `🎉 Pressure plate activated!`;
-          }
+      game.puzzles.forEach(p => {
+        if(p.type==='pressure' && !p.solved) {
+          let cnt = 0;
+          for(let pid in game.players) if(game.players[pid].x===p.x && game.players[pid].y===p.y) cnt++;
+          p.playersOn = cnt;
+          if(cnt >= p.required) p.solved = true;
         }
-        
-        // Dual lever
-        if(p.type === 'dualLever' && !p.solved) {
-          const bothActive = p.levers.every(l => l.active);
-          if(bothActive) p.solved = true;
+        if(p.type==='lever' && !p.solved) {
+          if(p.levers.every(l => l.active)) p.solved = true;
         }
       });
       
-      // Update doors
-      const solvedCount = gameState.puzzles.filter(p => p.solved).length;
-      gameState.doors.forEach(d => { d.open = solvedCount >= d.required; });
-    }
-    
-    function checkWinCondition() {
-      const allSolved = gameState.puzzles.every(p => p.solved);
-      gameState.exit.open = allSolved;
+      const solved = game.puzzles.filter(p=>p.solved).length;
+      game.doors.forEach(d => d.open = solved >= d.required);
       
-      for(let pid in gameState.players) {
-        const p = gameState.players[pid];
-        if(gameState.exit.open && p.x === gameState.exit.x && p.y === gameState.exit.y) {
-          gameState.win = true;
-          hintBox.innerText = `🏆 ESCAPED! Great teamwork!`;
-        }
+      // win condition
+      const allSolved = game.puzzles.every(p=>p.solved);
+      game.exit.open = allSolved;
+      for(let pid in game.players) {
+        if(game.exit.open && game.players[pid].x===game.exit.x && game.players[pid].y===game.exit.y)
+          game.win = true;
       }
     }
     
     function handleInteraction(playerId, puzzleIdx) {
-      const player = gameState.players[playerId];
-      const puzzle = gameState.puzzles[puzzleIdx];
+      const player = game.players[playerId];
+      const puzzle = game.puzzles[puzzleIdx];
       if(!puzzle || puzzle.solved) return;
       
-      // distance check
-      if(Math.abs(player.x - puzzle.x) > 1 || Math.abs(player.y - puzzle.y) > 1) {
-        // for dual lever check each lever
-        if(puzzle.type === 'dualLever') {
-          for(let lever of puzzle.levers) {
-            if(player.x === lever.x && player.y === lever.y) {
-              lever.active = true;
-              hintBox.innerText = `🔧 Lever pulled! Need both.`;
-              break;
-            }
-          }
-        }
-        checkPuzzles();
-        broadcastGameState();
-        return;
-      }
-      
       if(puzzle.type === 'code') {
-        // For simplicity, auto-solve if player has key
         if(player.inventory.includes('key')) {
           puzzle.solved = true;
-          hintBox.innerText = `🔓 Code panel unlocked with key!`;
+          hintMsg.innerText = `🔓 Code unlocked with key!`;
         } else {
-          hintBox.innerText = `🔐 Need a key to activate. Code: ${puzzle.code}`;
+          hintMsg.innerText = `🔐 Need a key. Code hint: ${puzzle.code}`;
         }
-      } else if(puzzle.type === 'pressure') {
-        // handled automatically by movement
+      } else if(puzzle.type === 'lever') {
+        // Activate lever if standing on it
+        puzzle.levers.forEach(l => {
+          if(player.x === l.x && player.y === l.y) l.active = true;
+        });
+        hintMsg.innerText = `🔧 Lever pulled! Both needed.`;
       }
-      
       checkPuzzles();
-      checkWinCondition();
-      broadcastGameState();
+      broadcastState();
     }
     
     function shareItem(giverId) {
-      const giver = gameState.players[giverId];
-      if(!giver || giver.inventory.length === 0) {
-        hintBox.innerText = `❌ No items to share.`;
-        return;
-      }
-      // give to nearest player
-      for(let pid in gameState.players) {
+      const giver = game.players[giverId];
+      if(!giver || giver.inventory.length===0) return;
+      for(let pid in game.players) {
         if(pid === giverId) continue;
-        const other = gameState.players[pid];
-        if(Math.abs(other.x - giver.x) <= 1 && Math.abs(other.y - giver.y) <= 1) {
+        const other = game.players[pid];
+        if(Math.abs(other.x-giver.x)<=1 && Math.abs(other.y-giver.y)<=1) {
           const item = giver.inventory.pop();
           other.inventory.push(item);
-          hintBox.innerText = `🤲 ${giver.name} gave ${item} to ${other.name}`;
-          broadcastGameState();
+          hintMsg.innerText = `🤲 ${giver.name} gave ${item} to ${other.name}`;
+          broadcastState();
           return;
         }
       }
-      hintBox.innerText = `👥 Stand next to a teammate to share.`;
+      hintMsg.innerText = `👥 Stand next to a teammate.`;
     }
     
-    // ---------- LOCAL MOVEMENT ----------
+    // ---------- LOCAL ACTIONS ----------
     function tryMove(dx, dy) {
-      if(!myPeerId || gameState.win) return;
-      const nx = localPlayer.x + dx;
-      const ny = localPlayer.y + dy;
-      if(!canMoveTo(nx, ny, localPlayer)) return;
-      
-      localPlayer.x = nx; localPlayer.y = ny;
+      if(!myId || game.win) return;
+      const nx = local.x+dx, ny = local.y+dy;
+      if(!canMove(nx, ny, local)) return;
+      local.x = nx; local.y = ny;
       
       if(isHost) {
-        const hostPlayer = gameState.players[myPeerId];
-        if(hostPlayer) {
-          hostPlayer.x = nx; hostPlayer.y = ny;
-          checkItemPickup(hostPlayer);
-          checkPuzzles();
-          checkWinCondition();
-          broadcastGameState();
-        }
+        const hostP = game.players[myId];
+        hostP.x = nx; hostP.y = ny;
+        checkPickup(hostP);
+        checkPuzzles();
+        broadcastState();
       } else {
-        Object.values(connections).forEach(c => c.send({ type: 'MOVE', x: nx, y: ny }));
+        Object.values(connections).forEach(c => c.send({ type:'MOVE', x:nx, y:ny }));
       }
     }
     
     function localInteract() {
-      if(!myPeerId) return;
-      // find nearby puzzle
-      let puzzleIdx = -1;
-      gameState.puzzles.forEach((p, idx) => {
-        if(p.type === 'dualLever') {
-          p.levers.forEach(l => { if(l.x===localPlayer.x && l.y===localPlayer.y) puzzleIdx = idx; });
+      if(!myId) return;
+      let idx = -1;
+      game.puzzles.forEach((p, i) => {
+        if(p.type==='lever') {
+          p.levers.forEach(l => { if(l.x===local.x && l.y===local.y) idx = i; });
         } else {
-          if(p.x === localPlayer.x && p.y === localPlayer.y) puzzleIdx = idx;
+          if(p.x === local.x && p.y === local.y) idx = i;
         }
       });
-      
-      if(puzzleIdx !== -1) {
-        if(isHost) {
-          handleInteraction(myPeerId, puzzleIdx);
-        } else {
-          Object.values(connections).forEach(c => c.send({ type: 'INTERACT', puzzleIndex: puzzleIdx }));
-        }
+      if(idx !== -1) {
+        if(isHost) handleInteraction(myId, idx);
+        else Object.values(connections).forEach(c => c.send({ type:'INTERACT', puzzleIdx: idx }));
       } else {
-        hintBox.innerText = `👀 Stand on a puzzle to interact.`;
+        hintMsg.innerText = `👀 Stand on a puzzle (🔢, ⚖️, 🔧) to interact.`;
       }
     }
     
-    // ---------- RENDERING ----------
+    // ---------- RENDER ----------
     function draw() {
       ctx.clearRect(0,0,720,480);
-      if(!currentLevel) return;
+      if(!levelData) return;
       
       // tiles
-      for(let r=0; r<MAP_ROWS; r++) {
-        for(let c=0; c<MAP_COLS; c++) {
-          let x=c*TILE_SIZE, y=r*TILE_SIZE;
-          if(currentLevel.walls[r][c] === 1) {
-            ctx.fillStyle = '#3a2e24';
-            ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
-            ctx.fillStyle = '#5d4e3c';
-            ctx.fillRect(x+2,y+2,TILE_SIZE-4,TILE_SIZE-4);
+      for(let r=0; r<ROWS; r++) {
+        for(let c=0; c<COLS; c++) {
+          let x=c*TILE, y=r*TILE;
+          if(levelData.walls[r][c]) {
+            ctx.fillStyle='#3a2e24'; ctx.fillRect(x,y,TILE,TILE);
+            ctx.fillStyle='#5d4e3c'; ctx.fillRect(x+2,y+2,TILE-4,TILE-4);
           } else {
-            ctx.fillStyle = '#1d3d4f';
-            ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
-            ctx.fillStyle = '#2e5a6e';
-            ctx.fillRect(x+1,y+1,TILE_SIZE-2,TILE_SIZE-2);
+            ctx.fillStyle='#1d3d4f'; ctx.fillRect(x,y,TILE,TILE);
+            ctx.fillStyle='#2e5a6e'; ctx.fillRect(x+1,y+1,TILE-2,TILE-2);
           }
         }
       }
       
       // puzzles
-      gameState.puzzles.forEach(p => {
-        if(p.type === 'pressure') {
-          let x=p.x*TILE_SIZE, y=p.y*TILE_SIZE;
-          ctx.fillStyle = p.solved ? '#a5e0a5' : '#7a9eb5';
-          ctx.beginPath(); ctx.arc(x+20, y+20, 14, 0, 2*Math.PI); ctx.fill();
-          ctx.fillStyle = '#fff'; ctx.font='bold 16px sans'; ctx.fillText(`${p.playersOn||0}/2`, x+12, y+28);
-        } else if(p.type === 'dualLever') {
+      game.puzzles.forEach(p => {
+        if(p.type==='pressure') {
+          let x=p.x*TILE, y=p.y*TILE;
+          ctx.fillStyle = p.solved?'#a5e0a5':'#7a9eb5';
+          ctx.beginPath(); ctx.arc(x+20,y+20,14,0,2*Math.PI); ctx.fill();
+          ctx.fillStyle='#fff'; ctx.font='bold 16px sans'; ctx.fillText(`${p.playersOn||0}/2`, x+12,y+28);
+        } else if(p.type==='code') {
+          let x=p.x*TILE, y=p.y*TILE;
+          ctx.fillStyle = p.solved?'#a0e0a0':'#7a9bb5';
+          ctx.fillRect(x+5,y+5,30,30);
+          ctx.fillStyle='#000'; ctx.font='bold 16px sans'; ctx.fillText('🔢', x+10,y+28);
+        } else if(p.type==='lever') {
           p.levers.forEach(l => {
-            let x=l.x*TILE_SIZE, y=l.y*TILE_SIZE;
-            ctx.fillStyle = l.active ? '#b3ff9b' : '#b58a6f';
-            ctx.fillRect(x+8, y+8, 24, 24);
-            ctx.fillStyle='#000'; ctx.fillText('🔧', x+12, y+28);
+            let x=l.x*TILE, y=l.y*TILE;
+            ctx.fillStyle = l.active?'#b3ff9b':'#b58a6f';
+            ctx.fillRect(x+8,y+8,24,24);
+            ctx.fillStyle='#000'; ctx.fillText('🔧', x+12,y+28);
           });
-        } else if(p.type === 'code') {
-          let x=p.x*TILE_SIZE, y=p.y*TILE_SIZE;
-          ctx.fillStyle = p.solved ? '#a0e0a0' : '#7a9bb5';
-          ctx.fillRect(x+5, y+5, 30, 30);
-          ctx.fillStyle='#000'; ctx.font='bold 16px sans'; ctx.fillText('🔢', x+10, y+28);
         }
       });
       
       // items
-      gameState.items.filter(i=>!i.collected).forEach(it => {
-        let x=it.x*TILE_SIZE, y=it.y*TILE_SIZE;
+      game.items.filter(i=>!i.collected).forEach(it => {
+        let x=it.x*TILE, y=it.y*TILE;
         ctx.fillStyle = it.type==='key'?'#FFD966':'#b0c4de';
-        ctx.beginPath(); ctx.arc(x+20, y+20, 10, 0, 2*Math.PI); ctx.fill();
-        ctx.fillStyle='#000'; ctx.fillText(it.type[0], x+16, y+26);
+        ctx.beginPath(); ctx.arc(x+20,y+20,10,0,2*Math.PI); ctx.fill();
+        ctx.fillStyle='#000'; ctx.fillText(it.type[0], x+16,y+26);
       });
       
       // doors
-      gameState.doors.filter(d=>!d.open).forEach(d => {
-        let x=d.x*TILE_SIZE, y=d.y*TILE_SIZE;
-        ctx.fillStyle = '#6b4f32'; ctx.fillRect(x+4,y+4,32,32);
-        ctx.fillStyle = '#9b7e5a'; ctx.fillRect(x+8,y+8,24,24);
+      game.doors.filter(d=>!d.open).forEach(d => {
+        let x=d.x*TILE, y=d.y*TILE;
+        ctx.fillStyle='#6b4f32'; ctx.fillRect(x+4,y+4,32,32);
+        ctx.fillStyle='#9b7e5a'; ctx.fillRect(x+8,y+8,24,24);
       });
       
       // exit
-      const ex = gameState.exit;
-      ctx.fillStyle = ex.open ? '#b3ffaa' : '#5f735f';
-      ctx.fillRect(ex.x*TILE_SIZE+8, ex.y*TILE_SIZE+8, 24,24);
-      ctx.fillStyle='#fff'; ctx.font='bold 20px sans'; ctx.fillText('🚪', ex.x*TILE_SIZE+12, ex.y*TILE_SIZE+30);
+      const ex = game.exit;
+      ctx.fillStyle = ex.open?'#b3ffaa':'#5f735f';
+      ctx.fillRect(ex.x*TILE+8, ex.y*TILE+8, 24,24);
+      ctx.fillStyle='#fff'; ctx.font='bold 20px sans'; ctx.fillText('🚪', ex.x*TILE+12, ex.y*TILE+30);
       
       // players
-      for(let pid in gameState.players) {
-        const p = gameState.players[pid];
+      for(let pid in game.players) {
+        const p = game.players[pid];
         ctx.fillStyle = p.color;
-        ctx.shadowColor = '#fff6'; ctx.shadowBlur = 10;
-        ctx.beginPath(); ctx.arc(p.x*TILE_SIZE+20, p.y*TILE_SIZE+20, 15, 0, 2*Math.PI); ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.shadowColor='#fff6'; ctx.shadowBlur=10;
+        ctx.beginPath(); ctx.arc(p.x*TILE+20, p.y*TILE+20, 15, 0, 2*Math.PI); ctx.fill();
+        ctx.shadowBlur=0;
         ctx.strokeStyle='white'; ctx.lineWidth=2; ctx.stroke();
-        ctx.fillStyle='white'; ctx.font='bold 12px sans'; ctx.fillText(p.name, p.x*TILE_SIZE+10, p.y*TILE_SIZE+8);
+        ctx.fillStyle='white'; ctx.font='bold 12px sans'; ctx.fillText(p.name, p.x*TILE+8, p.y*TILE+8);
         if(p.inventory.length) {
-          ctx.fillStyle='#FFD966'; ctx.beginPath(); ctx.arc(p.x*TILE_SIZE+30, p.y*TILE_SIZE+8, 7, 0, 2*Math.PI); ctx.fill();
+          ctx.fillStyle='#FFD966'; ctx.beginPath(); ctx.arc(p.x*TILE+30, p.y*TILE+8, 7, 0, 2*Math.PI); ctx.fill();
         }
       }
       
-      if(gameState.win) {
+      if(game.win) {
         ctx.fillStyle='#fad98b'; ctx.font='bold 32px sans'; ctx.fillText('✨ ESCAPED! ✨', 160, 200);
       }
       
-      levelText.innerText = `🏆 LVL ${gameState.level+1}`;
-      updatePlayerList();
+      levelDisplay.innerText = `🏆 LVL ${game.level+1}`;
+      updatePlayerTags();
       requestAnimationFrame(draw);
     }
     
-    function updatePlayerList() {
+    function updatePlayerTags() {
       let html = '';
-      for(let pid in gameState.players) {
-        const p = gameState.players[pid];
-        html += `<div class="player-tag"><span class="color-dot" style="background:${p.color}"></span>${p.name} ${p.inventory.length?'📦':''}</div>`;
+      for(let pid in game.players) {
+        const p = game.players[pid];
+        html += `<div class="player-badge"><span class="color-dot" style="background:${p.color}"></span>${p.name} ${p.inventory.length?'📦':''}</div>`;
       }
-      playerListDiv.innerHTML = html || '<span style="color:#aaa">Waiting for players...</span>';
+      playerTags.innerHTML = html || '<span style="color:#aaa">waiting...</span>';
     }
     
     function updateUI() {
-      updatePlayerList();
-      levelText.innerText = `🏆 LVL ${gameState.level+1}`;
+      updatePlayerTags();
+      levelDisplay.innerText = `🏆 LVL ${game.level+1}`;
     }
     
-    // ---------- SETUP EVENT LISTENERS (iPad friendly) ----------
-    function initEvents() {
-      document.getElementById('btnUp').addEventListener('click', () => tryMove(0, -1));
-      document.getElementById('btnDown').addEventListener('click', () => tryMove(0, 1));
-      document.getElementById('btnLeft').addEventListener('click', () => tryMove(-1, 0));
-      document.getElementById('btnRight').addEventListener('click', () => tryMove(1, 0));
+    // ---------- EVENT LISTENERS (iPad friendly) ----------
+    function bindControls() {
+      document.getElementById('btnUp').addEventListener('click', ()=>tryMove(0,-1));
+      document.getElementById('btnDown').addEventListener('click', ()=>tryMove(0,1));
+      document.getElementById('btnLeft').addEventListener('click', ()=>tryMove(-1,0));
+      document.getElementById('btnRight').addEventListener('click', ()=>tryMove(1,0));
       
-      // Keyboard fallback
       window.addEventListener('keydown', (e) => {
-        if(e.key === 'ArrowUp'||e.key==='w') { tryMove(0,-1); e.preventDefault(); }
-        if(e.key === 'ArrowDown'||e.key==='s') { tryMove(0,1); e.preventDefault(); }
-        if(e.key === 'ArrowLeft'||e.key==='a') { tryMove(-1,0); e.preventDefault(); }
-        if(e.key === 'ArrowRight'||e.key==='d') { tryMove(1,0); e.preventDefault(); }
-        if(e.key === 'e'||e.key==='E') { localInteract(); e.preventDefault(); }
+        if(e.key==='ArrowUp'||e.key==='w') { tryMove(0,-1); e.preventDefault(); }
+        if(e.key==='ArrowDown'||e.key==='s') { tryMove(0,1); e.preventDefault(); }
+        if(e.key==='ArrowLeft'||e.key==='a') { tryMove(-1,0); e.preventDefault(); }
+        if(e.key==='ArrowRight'||e.key==='d') { tryMove(1,0); e.preventDefault(); }
+        if(e.key==='e'||e.key==='E') { localInteract(); e.preventDefault(); }
       });
       
       document.getElementById('hostBtn').addEventListener('click', () => {
-        roomCode = roomInput.value.trim() || 'COOP700';
-        initPeer();
         isHost = true;
-        connText.innerText = `👑 HOST · ${roomCode}`;
-        localPlayer = { id: myPeerId, name: 'HOST', color: COLORS[0], x:2, y:2, inventory:[] };
-        gameState.players = { [myPeerId]: localPlayer };
-        loadLevel(0);
-        hintBox.innerText = `🎮 You are host! Share code: ${roomCode}`;
+        initPeer();
+        roomDisplay.innerText = `🟡 CREATING...`;
+        hintMsg.innerText = `🔄 Generating room...`;
       });
       
       document.getElementById('joinBtn').addEventListener('click', () => {
-        roomCode = roomInput.value.trim();
-        if(!roomCode) return;
-        initPeer();
+        const code = joinInput.value.trim();
+        if(!code) return;
         isHost = false;
+        initPeer();
         peer.on('open', () => {
-          const conn = peer.connect(roomCode, { reliable: true });
-          connections[roomCode] = conn;
+          const conn = peer.connect(code, { reliable:true });
+          connections[code] = conn;
           setupConnection(conn);
-          connText.innerText = `🔵 JOINED ${roomCode}`;
-          hintBox.innerText = `👋 Connected! Wait for host to start.`;
+          currentRoom = code;
+          roomDisplay.innerText = `🔵 JOINED: ${code}`;
+          hintMsg.innerText = `👋 Connected! Waiting for host...`;
         });
       });
       
       document.getElementById('interactBtn').addEventListener('click', localInteract);
-      document.getElementById('shareBtn').addEventListener('click', () => {
-        if(isHost) shareItem(myPeerId);
-        else Object.values(connections).forEach(c => c.send({ type: 'SHARE' }));
+      document.getElementById('shareBtn').addEventListener('click', ()=>{
+        if(isHost) shareItem(myId);
+        else Object.values(connections).forEach(c=>c.send({type:'SHARE'}));
       });
-      document.getElementById('resetBtn').addEventListener('click', () => {
-        if(isHost) loadLevel(gameState.level);
-        else Object.values(connections).forEach(c => c.send({ type: 'RESET' }));
+      document.getElementById('resetBtn').addEventListener('click', ()=>{
+        if(isHost) loadLevel(game.level);
+        else Object.values(connections).forEach(c=>c.send({type:'RESET'}));
       });
-      document.getElementById('nextBtn').addEventListener('click', () => {
-        if(!gameState.win) { hintBox.innerText = '🚫 Solve all puzzles first!'; return; }
-        if(isHost) loadLevel((gameState.level+1)%700);
-        else Object.values(connections).forEach(c => c.send({ type: 'NEXT' }));
+      document.getElementById('nextBtn').addEventListener('click', ()=>{
+        if(!game.win) { hintMsg.innerText='🚫 Solve all puzzles first!'; return; }
+        if(isHost) loadLevel((game.level+1)%700);
+        else Object.values(connections).forEach(c=>c.send({type:'NEXT'}));
       });
     }
     
-    // Initialize
-    initPeer();
-    currentLevel = generateLevel(0);
-    gameState.players = {};
-    initEvents();
+    // Start
+    bindControls();
+    levelData = generateLevel(0);
+    game.players = {};
     requestAnimationFrame(draw);
-    hintBox.innerText = '👥 Host a room, then share the code with friends!';
+    roomDisplay.innerText = `⚫ TAP 'CREATE ROOM'`;
   })();
 </script>
 </body>
