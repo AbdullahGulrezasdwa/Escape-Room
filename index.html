@@ -1,282 +1,755 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Escape Room – 3 Player</title>
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>👥 3‑PLAYER ESCAPE ROOM · 700 LEVELS · PEERJS</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
 
-<style>
     body {
-        margin: 0;
-        background: #0d0d0d;
-        font-family: Arial, sans-serif;
-        color: white;
-        overflow: hidden;
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(145deg, #0b0e1a 0%, #1a1f2e 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Segoe UI', 'Courier New', monospace;
     }
 
-    #lobby, #gameUI {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: rgba(20,20,20,0.9);
-        padding: 25px;
-        border-radius: 12px;
-        width: 350px;
-        text-align: center;
-        display: none;
+    .game-container {
+      background: #0f1322;
+      border-radius: 2rem;
+      padding: 1.5rem;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,215,100,0.2);
+      border: 1px solid #2e3a5e;
     }
 
-    #lobby { display: block; }
+    canvas {
+      display: block;
+      margin: 0 auto;
+      border-radius: 20px;
+      box-shadow: 0 0 0 3px #1e2740, inset 0 0 0 2px #4e3b1e;
+      background: #1a1e30;
+      image-rendering: crisp-edges; /* pixelated style */
+    }
 
-    input, button {
-        width: 90%;
-        padding: 10px;
-        margin: 8px 0;
-        border-radius: 6px;
-        border: none;
-        font-size: 16px;
+    .panel {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      margin: 16px 8px 4px 8px;
+      color: #efe7d0;
+      text-shadow: 0 2px 3px black;
+    }
+
+    .status-badge {
+      background: #232a40;
+      padding: 8px 16px;
+      border-radius: 40px;
+      border-left: 4px solid #f3b33d;
+      font-weight: bold;
+      letter-spacing: 1px;
+      box-shadow: inset 0 1px 3px #0b0e16, 0 4px 6px #00000030;
     }
 
     button {
-        background: #4CAF50;
-        color: white;
-        cursor: pointer;
+      background: #2d3b5a;
+      border: none;
+      color: white;
+      font-weight: bold;
+      padding: 8px 18px;
+      margin: 4px 6px;
+      border-radius: 36px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #121624, 0 2px 8px black;
+      border-bottom: 2px solid #f3b33d;
+      transition: all 0.07s;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
-    button:hover {
-        background: #45a049;
+    button:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #121624, 0 2px 6px black;
     }
 
-    #playerList {
-        margin-top: 10px;
-        font-size: 14px;
-        color: #ccc;
+    button.primary {
+      background: #d48f2b;
+      border-bottom-color: #ffdb8e;
+      color: #101520;
     }
 
-    #canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
+    input {
+      background: #1b2338;
+      border: 2px solid #3e4c6b;
+      padding: 8px 14px;
+      border-radius: 32px;
+      color: #f0e7c8;
+      font-weight: bold;
+      width: 160px;
+      outline: none;
+      text-align: center;
+      font-size: 1rem;
     }
 
-    #roomInfo {
-        position: absolute;
-        top: 10px;
-        left: 10px;
-        background: rgba(0,0,0,0.6);
-        padding: 12px;
-        border-radius: 8px;
-        display: none;
+    input::placeholder {
+      color: #8f9bb5;
+      font-weight: normal;
     }
-</style>
+
+    .player-list {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .player-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e2745;
+      padding: 4px 14px;
+      border-radius: 30px;
+      border: 1px solid #5f6f94;
+    }
+
+    .color-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      background: gray;
+    }
+
+    .level-badge {
+      font-size: 1.5rem;
+      font-weight: 800;
+      background: #242d47;
+      padding: 4px 20px;
+      border-radius: 40px;
+      color: #fad98b;
+    }
+
+    .help-note {
+      font-size: 0.8rem;
+      opacity: 0.9;
+      margin-top: 6px;
+      text-align: center;
+    }
+  </style>
+  <!-- PeerJS from CDN -->
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
-
 <body>
+<div class="game-container">
+  <canvas id="gameCanvas" width="720" height="480"></canvas>
 
-<canvas id="canvas" width="900" height="600"></canvas>
+  <div class="panel">
+    <div class="status-badge" id="connectionStatus">⚫ OFFLINE</div>
+    <div class="level-badge" id="levelDisplay">LVL 1</div>
+    <div class="player-list" id="playerTags"></div>
+  </div>
 
-<!-- LOBBY -->
-<div id="lobby">
-    <h2>Escape Room Multiplayer</h2>
-
-    <input id="nameInput" placeholder="Your Name">
-    <input id="colorInput" placeholder="Color (e.g. red)">
-
-    <button id="createBtn">Create Room</button>
-
-    <input id="joinInput" placeholder="Room ID">
-    <button id="joinBtn">Join Room</button>
-
-    <p id="roomIdDisplay"></p>
-    <div id="playerList"></div>
-
-    <button id="startBtn" style="display:none;">Start Game</button>
-</div>
-
-<!-- GAME UI -->
-<div id="roomInfo">
-    <h3 id="roomTitle"></h3>
-    <p id="roomDesc"></p>
+  <div style="display: flex; flex-wrap: wrap; justify-content: space-between;">
+    <div>
+      <input type="text" id="roomIdInput" placeholder="Room ID" maxlength="20" value="ESCAPE3">
+      <button id="hostBtn" class="primary">🎮 HOST</button>
+      <button id="joinBtn">🔗 JOIN</button>
+      <button id="nextLevelBtn" style="background:#3d4968;">⏩ NEXT LVL</button>
+    </div>
+    <div>
+      <button id="helpActionBtn" style="background:#526e4b;">🤝 HELP / DROP ITEM</button>
+      <button id="resetLevelBtn">⟲ RESET</button>
+    </div>
+  </div>
+  <div class="help-note">
+    ⬆️⬇️⬅️➡️ move · stand on switches together · share key · all reach exit!
+  </div>
 </div>
 
 <script>
-/* -------------------------
-   BASIC SETUP
---------------------------*/
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+  (function(){
+    "use strict";
 
-let peer = new Peer();
-let host = false;
-let roomId = null;
-let connections = [];
-let localId = null;
+    // ---------- CONFIG ----------
+    const TILE_SIZE = 40;          // 18x12 tiles = 720x480
+    const MAP_COLS = 18;
+    const MAP_ROWS = 12;
+    
+    // Player colors (3 players)
+    const PLAYER_COLORS = ['#FF6B9D', '#6BCBFF', '#B1E66F'];
+    const PLAYER_NAMES = ['P1', 'P2', 'P3'];
 
-let gameState = {
-    room: 0,
-    players: {}
-};
-
-const rooms = [
-    {title:"Room 1", desc:"Warm-up puzzle", code:"1234"},
-    {title:"Room 2", desc:"Harder puzzle", code:"4321"},
-    {title:"Room 3", desc:"Teamwork required", code:"9999"}
-];
-
-/* -------------------------
-   PEERJS
---------------------------*/
-peer.on("open", id => {
-    localId = id;
-});
-
-/* -------------------------
-   HOST CREATES ROOM
---------------------------*/
-document.getElementById("createBtn").onclick = () => {
-    host = true;
-    roomId = localId;
-    document.getElementById("roomIdDisplay").textContent = "Room ID: " + roomId;
-};
-
-/* -------------------------
-   JOIN ROOM
---------------------------*/
-document.getElementById("joinBtn").onclick = () => {
-    const target = document.getElementById("joinInput").value.trim();
-    if (!target) return;
-
-    const conn = peer.connect(target);
-    setupClient(conn);
-};
-
-/* -------------------------
-   HOST ACCEPTS CONNECTIONS
---------------------------*/
-peer.on("connection", conn => {
-    if (!host) return;
-    setupHost(conn);
-});
-
-/* -------------------------
-   HOST LOGIC
---------------------------*/
-function setupHost(conn) {
-    connections.push(conn);
-
-    conn.on("data", msg => {
-        if (msg.type === "MOVE") {
-            gameState.players[msg.id].x = msg.x;
-            gameState.players[msg.id].y = msg.y;
-        }
-    });
-
-    // Add player
-    gameState.players[conn.peer] = {
-        name: "Player",
-        color: "white",
-        x: 100,
-        y: 100
+    // ---------- GLOBAL STATE ----------
+    let peer = null;
+    let connections = {};           // peerId -> DataConnection
+    let myPeerId = '';
+    let isHost = false;
+    let roomId = 'ESCAPE3';
+    
+    // Game state (host-authoritative)
+    let gameState = {
+      levelIndex: 0,                // 0-based, we'll scale to 700 levels procedurally
+      players: {},                  // peerId -> { id, name, color, x, y, hasKey, pos }
+      items: [],                    // array of { type, x, y, collected, ... }
+      doors: [],                    // { x, y, open, requiresPlayers:2 }
+      switches: [],                 // { x, y, active, requiredCount:2 }
+      exit: { x: 16, y: 10, active: false },
+      keySpawned: false,
+      win: false,
     };
 
-    updatePlayerList();
+    // Local player info
+    let localPlayer = {
+      id: '',
+      name: 'You',
+      color: '#AAAAAA',
+      x: 2, y: 2,
+      hasKey: false,
+    };
 
-    if (connections.length === 2) {
-        document.getElementById("startBtn").style.display = "block";
-    }
-}
+    // Rendering & input
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    let keysPressed = {};
+    let lastSentPosition = { x:2, y:2 };
+    
+    // UI elements
+    const statusDiv = document.getElementById('connectionStatus');
+    const levelDisplay = document.getElementById('levelDisplay');
+    const playerTagsDiv = document.getElementById('playerTags');
+    const roomInput = document.getElementById('roomIdInput');
+    const hostBtn = document.getElementById('hostBtn');
+    const joinBtn = document.getElementById('joinBtn');
+    const nextBtn = document.getElementById('nextLevelBtn');
+    const resetBtn = document.getElementById('resetLevelBtn');
+    const helpBtn = document.getElementById('helpActionBtn');
 
-/* -------------------------
-   CLIENT LOGIC
---------------------------*/
-function setupClient(conn) {
-    conn.on("open", () => {
-        // Send player info
-        conn.send({
-            type: "JOIN",
-            name: document.getElementById("nameInput").value,
-            color: document.getElementById("colorInput").value,
-            id: localId
-        });
-    });
-
-    conn.on("data", msg => {
-        if (msg.type === "STATE") {
-            gameState = msg.state;
-            render();
-            updateRoomInfo();
+    // ---------- LEVEL GENERATOR (scalable to 700+) ----------
+    function generateLevel(levelIdx) {
+      // Base empty map (0 = floor, 1 = wall)
+      let walls = Array(MAP_ROWS).fill().map(() => Array(MAP_COLS).fill(0));
+      
+      // Add border walls
+      for (let r=0; r<MAP_ROWS; r++) {
+        for (let c=0; c<MAP_COLS; c++) {
+          if (r===0 || r===MAP_ROWS-1 || c===0 || c===MAP_COLS-1) walls[r][c] = 1;
         }
-    });
-}
+      }
 
-/* -------------------------
-   START GAME (HOST)
---------------------------*/
-document.getElementById("startBtn").onclick = () => {
-    document.getElementById("lobby").style.display = "none";
-    document.getElementById("roomInfo").style.display = "block";
+      // Difficulty scaling: more walls, puzzles
+      const difficulty = Math.min(0.95, levelIdx / 700);
+      const wallDensity = 0.05 + difficulty * 0.2;
+      
+      // procedural inner walls (simple maze style)
+      for (let r=2; r<MAP_ROWS-2; r+=2) {
+        for (let c=2; c<MAP_COLS-2; c+=2) {
+          if (Math.random() < wallDensity * 1.5) {
+            walls[r][c] = 1;
+            // sometimes extend
+            if (Math.random()<0.4 && c+1<MAP_COLS-1) walls[r][c+1] = 1;
+            if (Math.random()<0.3 && r+1<MAP_ROWS-1) walls[r+1][c] = 1;
+          }
+        }
+      }
 
-    setInterval(() => {
-        broadcast({type:"STATE", state:gameState});
-    }, 100);
-};
+      // Ensure spawn area clear
+      walls[2][2] = 0; walls[2][3] = 0; walls[3][2] = 0;
+      walls[MAP_ROWS-3][MAP_COLS-3] = 0; 
+      
+      // Exit position
+      const exitX = MAP_COLS-3, exitY = MAP_ROWS-3;
+      walls[exitY][exitX] = 0;
+      
+      // Items & puzzles
+      let items = [];
+      let doors = [];
+      let switches = [];
+      
+      // Key placement (always near start early, later hidden)
+      let keyPlaced = false;
+      for (let attempt=0; attempt<50; attempt++) {
+        let kx = 2 + Math.floor(Math.random()*(MAP_COLS-4));
+        let ky = 2 + Math.floor(Math.random()*(MAP_ROWS-4));
+        if (walls[ky][kx] === 0 && !(kx===2&&ky===2)) {
+          items.push({ type: 'key', x: kx, y: ky, collected: false, owner: null });
+          keyPlaced = true;
+          break;
+        }
+      }
+      if(!keyPlaced) items.push({ type: 'key', x: 3, y: 4, collected: false, owner: null });
 
-/* -------------------------
-   BROADCAST
---------------------------*/
-function broadcast(msg) {
-    connections.forEach(c => c.send(msg));
-}
+      // Switches requiring cooperation (2 players)
+      let switchCount = 1 + Math.floor(difficulty * 4);
+      for (let s=0; s<switchCount; s++) {
+        let placed = false;
+        for (let tries=0; tries<30; tries++) {
+          let sx = 3 + Math.floor(Math.random()*(MAP_COLS-6));
+          let sy = 3 + Math.floor(Math.random()*(MAP_ROWS-6));
+          if (walls[sy][sx] === 0) {
+            switches.push({ x: sx, y: sy, active: false, required: 2, playersOn: 0 });
+            placed = true;
+            break;
+          }
+        }
+      }
 
-/* -------------------------
-   UI HELPERS
---------------------------*/
-function updatePlayerList() {
-    const list = document.getElementById("playerList");
-    list.innerHTML = "Players:<br>";
-    for (let id in gameState.players) {
-        list.innerHTML += "- " + id + "<br>";
+      // Doors that open when switches active
+      if (switches.length > 0) {
+        // Place a door near exit or blocking path
+        let doorX = MAP_COLS-4, doorY = MAP_ROWS-4;
+        if (walls[doorY][doorX] === 0) {
+          doors.push({ x: doorX, y: doorY, open: false, requiredSwitches: switches.length });
+        } else {
+          doors.push({ x: 6, y: 6, open: false, requiredSwitches: switches.length });
+        }
+      }
+
+      // make exit active only if key collected & switches active
+      return {
+        walls,
+        items,
+        doors,
+        switches,
+        exit: { x: exitX, y: exitY, active: false },
+        keyRequired: true,
+        winCondition: (state) => {
+          // exit active when key held by someone and all switches active
+          const anyHasKey = Object.values(state.players).some(p => p.hasKey);
+          const allSwitchesActive = state.switches.every(sw => sw.active);
+          state.exit.active = anyHasKey && allSwitchesActive;
+          return state.exit.active;
+        }
+      };
     }
-}
 
-function updateRoomInfo() {
-    const r = rooms[gameState.room];
-    document.getElementById("roomTitle").textContent = r.title;
-    document.getElementById("roomDesc").textContent = r.desc;
-}
+    // Initialize first level
+    let currentLevel = generateLevel(0);
+    
+    function loadLevelIntoState(levelIdx) {
+      const newLevel = generateLevel(levelIdx);
+      currentLevel = newLevel;
+      
+      // Reset players positions to spawn
+      const spawns = [[2,2], [3,2], [2,3]];
+      let idx=0;
+      for (let pid in gameState.players) {
+        let spawn = spawns[idx % spawns.length];
+        gameState.players[pid].x = spawn[0];
+        gameState.players[pid].y = spawn[1];
+        gameState.players[pid].hasKey = false;
+        idx++;
+      }
+      if (localPlayer.id) {
+        localPlayer.x = 2; localPlayer.y = 2;
+        localPlayer.hasKey = false;
+      }
+      
+      gameState.items = JSON.parse(JSON.stringify(newLevel.items));
+      gameState.doors = JSON.parse(JSON.stringify(newLevel.doors));
+      gameState.switches = JSON.parse(JSON.stringify(newLevel.switches));
+      gameState.exit = { ...newLevel.exit };
+      gameState.win = false;
+      gameState.levelIndex = levelIdx;
+      
+      updateUILevel();
+      if (isHost) broadcastGameState();
+    }
 
-/* -------------------------
-   MOVEMENT
---------------------------*/
-window.addEventListener("keydown", e => {
-    const p = gameState.players[localId];
-    if (!p) return;
+    // ---------- PEERJS SETUP ----------
+    function initPeer() {
+      peer = new Peer();
+      peer.on('open', (id) => {
+        myPeerId = id;
+        statusDiv.innerHTML = `🟢 ONLINE · ${id.slice(0,6)}`;
+        console.log('My peer ID:', id);
+      });
+      
+      peer.on('connection', (conn) => {
+        if (!isHost) return; // only host accepts connections
+        setupConnection(conn);
+        // Send current game state to new peer
+        setTimeout(() => {
+          conn.send({ type: 'FULL_STATE', state: gameState, level: currentLevel });
+        }, 200);
+      });
+      
+      peer.on('error', (err) => {
+        statusDiv.innerHTML = `🔴 ERROR: ${err.type}`;
+        console.error(err);
+      });
+    }
 
-    if (e.key === "ArrowUp") p.y -= 10;
-    if (e.key === "ArrowDown") p.y += 10;
-    if (e.key === "ArrowLeft") p.x -= 10;
-    if (e.key === "ArrowRight") p.x += 10;
+    function setupConnection(conn) {
+      const peerId = conn.peer;
+      connections[peerId] = conn;
+      
+      conn.on('data', (data) => handleData(peerId, data));
+      conn.on('close', () => {
+        delete connections[peerId];
+        if (gameState.players[peerId]) {
+          delete gameState.players[peerId];
+          if (isHost) broadcastGameState();
+        }
+        updatePlayerTags();
+      });
+      
+      // Add player slot
+      if (isHost) {
+        const playerCount = Object.keys(gameState.players).length;
+        if (playerCount < 3) {
+          const color = PLAYER_COLORS[playerCount % PLAYER_COLORS.length];
+          const name = PLAYER_NAMES[playerCount % PLAYER_NAMES.length];
+          gameState.players[peerId] = {
+            id: peerId, name, color, x: 2, y: 2, hasKey: false
+          };
+          broadcastGameState();
+        }
+      }
+    }
 
-    render();
-});
+    function handleData(senderId, data) {
+      if (!isHost && data.type === 'FULL_STATE') {
+        // client receives full sync
+        gameState = data.state;
+        currentLevel = data.level;
+        // update local player from gameState
+        if (gameState.players[myPeerId]) {
+          localPlayer = { ...gameState.players[myPeerId] };
+        }
+        updateUILevel();
+        return;
+      }
+      
+      if (isHost) {
+        // Host handles updates from clients
+        if (data.type === 'MOVE') {
+          const player = gameState.players[senderId];
+          if (player) {
+            const newX = data.x, newY = data.y;
+            if (canMoveTo(newX, newY, player)) {
+              player.x = newX;
+              player.y = newY;
+              checkItemPickup(player);
+              checkSwitches();
+              broadcastGameState();
+            }
+          }
+        } else if (data.type === 'HELP_ACTION') {
+          handleHelpAction(senderId);
+        } else if (data.type === 'REQUEST_RESET') {
+          loadLevelIntoState(gameState.levelIndex);
+        } else if (data.type === 'REQUEST_NEXT') {
+          if (gameState.win) {
+            let nextIdx = (gameState.levelIndex + 1) % 700;
+            loadLevelIntoState(nextIdx);
+          }
+        }
+      } else {
+        // Client receives state patch from host
+        if (data.type === 'STATE_UPDATE') {
+          gameState = data.state;
+          // sync local player
+          if (gameState.players[myPeerId]) {
+            localPlayer = { ...gameState.players[myPeerId] };
+          }
+          updateUILevel();
+        }
+      }
+    }
 
-/* -------------------------
-   RENDER
---------------------------*/
-function render() {
-    ctx.fillStyle = "#111";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    function broadcastGameState() {
+      if (!isHost) return;
+      const msg = { type: 'STATE_UPDATE', state: gameState };
+      for (let pid in connections) {
+        try { connections[pid].send(msg); } catch(e) {}
+      }
+      // also update local
+      if (gameState.players[myPeerId]) {
+        localPlayer = { ...gameState.players[myPeerId] };
+      }
+    }
 
-    for (let id in gameState.players) {
-        const p = gameState.players[id];
+    // ---------- GAME LOGIC ----------
+    function canMoveTo(nx, ny, player) {
+      if (nx < 0 || ny < 0 || nx >= MAP_COLS || ny >= MAP_ROWS) return false;
+      if (currentLevel.walls[ny][nx] === 1) return false;
+      // check closed doors
+      for (let d of gameState.doors) {
+        if (!d.open && d.x === nx && d.y === ny) return false;
+      }
+      return true;
+    }
+
+    function checkItemPickup(player) {
+      for (let item of gameState.items) {
+        if (item.type === 'key' && !item.collected && item.x === player.x && item.y === player.y) {
+          item.collected = true;
+          item.owner = player.id;
+          player.hasKey = true;
+        }
+      }
+      // update win condition
+      if (currentLevel.winCondition) {
+        gameState.win = currentLevel.winCondition(gameState);
+      }
+    }
+
+    function checkSwitches() {
+      for (let sw of gameState.switches) {
+        let count = 0;
+        for (let pid in gameState.players) {
+          const p = gameState.players[pid];
+          if (p.x === sw.x && p.y === sw.y) count++;
+        }
+        sw.playersOn = count;
+        sw.active = (count >= sw.required);
+      }
+      // update doors based on switches
+      const activeSwitches = gameState.switches.filter(s => s.active).length;
+      for (let d of gameState.doors) {
+        d.open = (activeSwitches >= d.requiredSwitches);
+      }
+      if (currentLevel.winCondition) {
+        gameState.win = currentLevel.winCondition(gameState);
+      }
+    }
+
+    function handleHelpAction(senderId) {
+      // drop key / share
+      const player = gameState.players[senderId];
+      if (player && player.hasKey) {
+        // find another player nearby to give key
+        for (let pid in gameState.players) {
+          if (pid === senderId) continue;
+          const other = gameState.players[pid];
+          if (Math.abs(other.x - player.x) <= 1 && Math.abs(other.y - player.y) <= 1) {
+            player.hasKey = false;
+            other.hasKey = true;
+            // update item owner
+            const keyItem = gameState.items.find(it => it.type==='key');
+            if (keyItem) keyItem.owner = other.id;
+            broadcastGameState();
+            break;
+          }
+        }
+      }
+    }
+
+    // ---------- INPUT & RENDER ----------
+    function handleLocalMove(dx, dy) {
+      if (!myPeerId || gameState.win) return;
+      const newX = localPlayer.x + dx;
+      const newY = localPlayer.y + dy;
+      if (!canMoveTo(newX, newY, localPlayer)) return;
+      
+      localPlayer.x = newX;
+      localPlayer.y = newY;
+      
+      if (isHost) {
+        // host updates directly
+        const hostPlayer = gameState.players[myPeerId];
+        if (hostPlayer) {
+          hostPlayer.x = newX; hostPlayer.y = newY;
+          checkItemPickup(hostPlayer);
+          checkSwitches();
+          broadcastGameState();
+        }
+      } else {
+        // send move to host
+        for (let pid in connections) {
+          try { connections[pid].send({ type: 'MOVE', x: newX, y: newY }); } catch(e) {}
+        }
+      }
+    }
+
+    function draw() {
+      ctx.clearRect(0,0,720,480);
+      
+      // Draw tiles
+      for (let r=0; r<MAP_ROWS; r++) {
+        for (let c=0; c<MAP_COLS; c++) {
+          let x = c*TILE_SIZE, y = r*TILE_SIZE;
+          if (currentLevel.walls[r][c] === 1) {
+            ctx.fillStyle = '#3a2e1f';
+            ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
+            ctx.fillStyle = '#5d4a2e';
+            ctx.fillRect(x+2,y+2,TILE_SIZE-4,TILE_SIZE-4);
+          } else {
+            ctx.fillStyle = '#1e2a3a';
+            ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
+            ctx.fillStyle = '#2f405b';
+            ctx.fillRect(x+1,y+1,TILE_SIZE-2,TILE_SIZE-2);
+          }
+        }
+      }
+      
+      // Draw switches
+      for (let sw of gameState.switches) {
+        let x = sw.x*TILE_SIZE, y = sw.y*TILE_SIZE;
+        ctx.fillStyle = sw.active ? '#a5d6ff' : '#6d8aaf';
+        ctx.beginPath();
+        ctx.arc(x+TILE_SIZE/2, y+TILE_SIZE/2, 12, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 14px monospace';
+        ctx.fillText(`${sw.playersOn}/${sw.required}`, x+10, y+26);
+      }
+      
+      // Draw doors
+      for (let d of gameState.doors) {
+        if (d.open) continue;
+        let x = d.x*TILE_SIZE, y = d.y*TILE_SIZE;
+        ctx.fillStyle = '#8b5e3c';
+        ctx.fillRect(x+5,y+5,TILE_SIZE-10,TILE_SIZE-10);
+        ctx.fillStyle = '#b57e4c';
+        ctx.fillRect(x+8,y+8,TILE_SIZE-16,TILE_SIZE-16);
+      }
+      
+      // Draw items (key)
+      for (let item of gameState.items) {
+        if (item.type==='key' && !item.collected) {
+          let x = item.x*TILE_SIZE, y = item.y*TILE_SIZE;
+          ctx.fillStyle = '#FFD966';
+          ctx.beginPath();
+          ctx.ellipse(x+20, y+16, 8, 12, 0, 0, Math.PI*2);
+          ctx.fill();
+          ctx.fillStyle = '#B8860B';
+          ctx.beginPath();
+          ctx.arc(x+24, y+12, 5, 0, 2*Math.PI);
+          ctx.fill();
+        }
+      }
+      
+      // Draw exit
+      const ex = gameState.exit;
+      ctx.fillStyle = gameState.exit.active ? '#7ef07e' : '#5a7a5a';
+      ctx.fillRect(ex.x*TILE_SIZE+8, ex.y*TILE_SIZE+8, 24,24);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText('🚪', ex.x*TILE_SIZE+12, ex.y*TILE_SIZE+30);
+      
+      // Draw players
+      for (let pid in gameState.players) {
+        const p = gameState.players[pid];
         ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, p.y, 30, 30);
-        ctx.fillStyle = "white";
-        ctx.fillText(p.name, p.x, p.y - 5);
+        ctx.beginPath();
+        ctx.arc(p.x*TILE_SIZE+20, p.y*TILE_SIZE+20, 14, 0, 2*Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = '#fff3d1';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 12px monospace';
+        ctx.fillText(p.name, p.x*TILE_SIZE+10, p.y*TILE_SIZE+10);
+        if (p.hasKey) {
+          ctx.fillStyle = '#FFD966';
+          ctx.beginPath();
+          ctx.arc(p.x*TILE_SIZE+28, p.y*TILE_SIZE+8, 6, 0, 2*Math.PI);
+          ctx.fill();
+        }
+      }
+      
+      if (gameState.win) {
+        ctx.fillStyle = '#f9e076';
+        ctx.font = 'bold 28px monospace';
+        ctx.fillText('🏆 ESCAPED!', 240, 240);
+      }
+      
+      updatePlayerTags();
+      requestAnimationFrame(draw);
     }
-}
-</script>
 
+    function updatePlayerTags() {
+      let html = '';
+      for (let pid in gameState.players) {
+        const p = gameState.players[pid];
+        html += `<div class="player-tag"><span class="color-dot" style="background:${p.color}"></span>${p.name} ${p.hasKey?'🔑':''}</div>`;
+      }
+      playerTagsDiv.innerHTML = html || '<span style="opacity:0.7">waiting...</span>';
+    }
+
+    function updateUILevel() {
+      levelDisplay.innerText = `LVL ${gameState.levelIndex+1}`;
+    }
+
+    // ---------- EVENT LISTENERS ----------
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' || e.key === 'w') handleLocalMove(0, -1);
+      if (e.key === 'ArrowDown' || e.key === 's') handleLocalMove(0, 1);
+      if (e.key === 'ArrowLeft' || e.key === 'a') handleLocalMove(-1, 0);
+      if (e.key === 'ArrowRight'|| e.key === 'd') handleLocalMove(1, 0);
+      e.preventDefault();
+    });
+    
+    hostBtn.addEventListener('click', () => {
+      roomId = roomInput.value.trim() || 'ESCAPE3';
+      if (peer) peer.destroy();
+      initPeer();
+      isHost = true;
+      statusDiv.innerHTML = `🟡 HOST · ${roomId}`;
+      
+      // Initialize game as host
+      gameState = { levelIndex: 0, players: {}, items: [], doors: [], switches: [], exit:{x:16,y:10}, win:false };
+      localPlayer.id = myPeerId;
+      localPlayer.color = PLAYER_COLORS[0];
+      localPlayer.name = 'Host';
+      gameState.players[myPeerId] = { id: myPeerId, name:'Host', color:PLAYER_COLORS[0], x:2,y:2,hasKey:false };
+      loadLevelIntoState(0);
+    });
+    
+    joinBtn.addEventListener('click', () => {
+      roomId = roomInput.value.trim();
+      if (!roomId) return;
+      if (peer) peer.destroy();
+      initPeer();
+      isHost = false;
+      peer.on('open', (id) => {
+        const conn = peer.connect(roomId, { reliable: true });
+        setupConnection(conn);
+        connections[roomId] = conn;
+        statusDiv.innerHTML = `🔵 JOINED · ${roomId}`;
+      });
+    });
+    
+    helpBtn.addEventListener('click', () => {
+      if (!myPeerId) return;
+      if (isHost) {
+        handleHelpAction(myPeerId);
+      } else {
+        for (let pid in connections) {
+          connections[pid].send({ type: 'HELP_ACTION' });
+        }
+      }
+    });
+    
+    resetBtn.addEventListener('click', () => {
+      if (isHost) {
+        loadLevelIntoState(gameState.levelIndex);
+      } else {
+        for (let pid in connections) connections[pid].send({ type: 'REQUEST_RESET' });
+      }
+    });
+    
+    nextBtn.addEventListener('click', () => {
+      if (!gameState.win) return alert('Finish level first!');
+      if (isHost) {
+        let next = (gameState.levelIndex + 1) % 700;
+        loadLevelIntoState(next);
+      } else {
+        for (let pid in connections) connections[pid].send({ type: 'REQUEST_NEXT' });
+      }
+    });
+
+    // Start drawing
+    requestAnimationFrame(draw);
+    initPeer(); // start with default peer
+  })();
+</script>
 </body>
 </html>
