@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ABDESCAPE ROOM 3D · MULTIPLAYER</title>
+<title>AESCAPE ROOM 3D · MULTIPLAYER</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,700;1,400&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -672,7 +672,7 @@ function mkMat(color,opts={}){
 }
 
 function buildLights(th){
-  scene.children.filter(c=>c.isLight).forEach(c=>scene.remove(c));
+  scene.children.filter(c=>c.isLight||c.isSpotLight).forEach(c=>scene.remove(c));
   ambientLight=new THREE.AmbientLight(th.ambient[0],th.ambient[1]);
   scene.add(ambientLight);
   // Single directional with smaller shadow map (perf)
@@ -762,30 +762,94 @@ function buildProps(th){
 }
 
 // ── CLUE NOTE ─────────────────────────────────────────
+function makeCodeCanvas(code,th,w,h){
+  const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  const ctx=cv.getContext('2d');
+  const c1=th.strip===0x00ff88?'#00ff88':th.strip===0x00c8ff?'#00c8ff':'#ffcc00';
+  // Background
+  ctx.fillStyle='#060e08';ctx.fillRect(0,0,w,h);
+  // Scanline texture
+  for(let y=0;y<h;y+=4){ctx.fillStyle='rgba(0,0,0,0.18)';ctx.fillRect(0,y,w,2);}
+  // Border (double)
+  ctx.strokeStyle=c1;ctx.lineWidth=4;ctx.strokeRect(4,4,w-8,h-8);
+  ctx.strokeStyle=c1+'44';ctx.lineWidth=1;ctx.strokeRect(10,10,w-20,h-20);
+  // Header
+  ctx.fillStyle=c1;ctx.font=`bold ${Math.floor(h*.11)}px monospace`;ctx.textAlign='center';
+  ctx.fillText('ACCESS CODE', w/2, h*.22);
+  // Separator line
+  ctx.strokeStyle=c1+'66';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(w*.1,h*.3);ctx.lineTo(w*.9,h*.3);ctx.stroke();
+  // Big code digits with glow
+  ctx.shadowColor=c1;ctx.shadowBlur=20;
+  ctx.fillStyle='#ffffff';ctx.font=`bold ${Math.floor(h*.44)}px monospace`;
+  ctx.letterSpacing='8px';
+  ctx.fillText(code, w/2, h*.72);
+  ctx.shadowBlur=0;
+  // Footer
+  ctx.fillStyle='rgba(255,255,255,0.22)';ctx.font=`${Math.floor(h*.07)}px monospace`;
+  ctx.fillText('AUTHORIZED PERSONNEL ONLY', w/2, h*.9);
+  return cv;
+}
+
 function buildClueNote(th){
   const codePuzzle=G.puzzles.find(p=>p.type==='code');
   const code=codePuzzle?codePuzzle.answer:'????';
-  const cv=document.createElement('canvas');
-  cv.width=256;cv.height=128;
-  const ctx=cv.getContext('2d');
-  ctx.fillStyle='#0d1a08';ctx.fillRect(0,0,256,128);
   const c1=th.strip===0x00ff88?'#00ff88':th.strip===0x00c8ff?'#00c8ff':'#ffcc00';
-  ctx.strokeStyle=c1;ctx.lineWidth=3;ctx.strokeRect(4,4,248,120);
-  ctx.fillStyle=c1;ctx.font='bold 14px monospace';ctx.textAlign='center';
-  ctx.fillText('ACCESS CODE', 128, 28);
-  ctx.fillStyle='#ffffff';ctx.font='bold 44px monospace';
-  ctx.fillText(code, 128, 80);
-  ctx.fillStyle='rgba(255,255,255,0.28)';ctx.font='9px monospace';
-  ctx.fillText('AUTHORIZED PERSONNEL ONLY', 128, 110);
-  const tex=new THREE.CanvasTexture(cv);
-  const noteMat=new THREE.MeshStandardMaterial({map:tex,emissiveMap:tex,emissive:new THREE.Color(0x224433),emissiveIntensity:.7});
-  const noteMesh=mesh(new THREE.PlaneGeometry(1.0,.5),noteMat);
-  noteMesh.position.set(HALF-.06,1.85,-1.5);noteMesh.rotation.y=-Math.PI/2;
+  const stripHex=th.strip;
+
+  // ── MAIN NOTE: large sign on the SOUTH wall (behind spawn — player sees it turning around) ──
+  const cv=makeCodeCanvas(code,th,512,256);
+  const tex=new THREE.CanvasTexture(cv);tex.needsUpdate=true;
+  const noteMat=new THREE.MeshStandardMaterial({
+    map:tex,emissiveMap:tex,
+    emissive:new THREE.Color(stripHex),emissiveIntensity:1.8,
+    roughness:.2,metalness:.1
+  });
+  // 2.4 wide × 1.2 tall — very visible
+  const noteMesh=mesh(new THREE.PlaneGeometry(2.4,1.2),noteMat);
+  noteMesh.position.set(0, 2.0, HALF-.04); // south wall, centre, eye height
+  noteMesh.rotation.y=Math.PI; // face inward
   scene.add(noteMesh);V.clueNote=noteMesh;
-  const frameMat=mkMat(0x1a2a1a,{r:.6,m:.4});
-  const frame=mesh(new THREE.BoxGeometry(1.06,.56,.04),frameMat);
-  frame.position.set(HALF-.09,1.85,-1.5);frame.rotation.y=-Math.PI/2;addR(frame);
-  const pl=new THREE.PointLight(0xffffff,.5,2.2);pl.position.set(HALF-1.2,2.1,-1.5);scene.add(pl);
+
+  // Frame around it
+  const frameMat=mkMat(0x0a1a0a,{r:.5,m:.5,em:stripHex,ei:.4});
+  const frame=mesh(new THREE.BoxGeometry(2.52,1.32,.06),frameMat);
+  frame.position.set(0,2.0,HALF-.07);frame.rotation.y=Math.PI;addR(frame);
+
+  // Arrow pointing to it
+  for(let side of[-1,1]){
+    const arrow=mesh(new THREE.ConeGeometry(.12,.35,4),
+      new THREE.MeshStandardMaterial({color:stripHex,emissive:new THREE.Color(stripHex),emissiveIntensity:2}));
+    arrow.position.set(side*1.55,2.0,HALF-.12);arrow.rotation.y=Math.PI;
+    arrow.rotation.z=side*Math.PI/2;addR(arrow);
+  }
+
+  // Bright spotlight illuminating the note
+  const spot=new THREE.SpotLight(0xffffff,3.5,8,Math.PI/5,.5,1);
+  spot.position.set(0,WALL_H-.4,HALF-1.8);spot.target.position.set(0,2.0,HALF);
+  scene.add(spot);scene.add(spot.target);
+
+  // ── SMALL COPY: sticky note right next to the code panel ──
+  const cv2=makeCodeCanvas(code,th,256,160);
+  const tex2=new THREE.CanvasTexture(cv2);tex2.needsUpdate=true;
+  const noteMat2=new THREE.MeshStandardMaterial({
+    map:tex2,emissiveMap:tex2,
+    emissive:new THREE.Color(stripHex),emissiveIntensity:1.4,
+  });
+  const note2=mesh(new THREE.PlaneGeometry(.9,.56),noteMat2);
+  // Place it on east wall, just ABOVE the code panel (panel is at y=1.4)
+  note2.position.set(HALF-.04, 2.5, G.puzzles.find(p=>p.type==='code')?.pos.z||1);
+  note2.rotation.y=-Math.PI/2;
+  scene.add(note2);V.room.push(note2); // track for cleanup
+
+  const frame2=mesh(new THREE.BoxGeometry(.96,.62,.04),mkMat(0x0a1a0a,{r:.5,m:.5}));
+  frame2.position.set(HALF-.07,2.5,G.puzzles.find(p=>p.type==='code')?.pos.z||1);
+  frame2.rotation.y=-Math.PI/2;addR(frame2);
+
+  // Small glow light near code panel note
+  const pl2=new THREE.PointLight(stripHex,1.2,3);
+  pl2.position.set(HALF-1,2.5,G.puzzles.find(p=>p.type==='code')?.pos.z||1);
+  scene.add(pl2);
 }
 
 function buildItems(){
@@ -1235,7 +1299,7 @@ function updateProximity(){
   if(V.clueNote){
     const np=V.clueNote.position;
     const dx=p.pos.x-np.x,dz=p.pos.z-np.z;
-    if(Math.sqrt(dx*dx+dz*dz)<2.5)hint('📋 Access code is posted here — memorize it!');
+    if(Math.sqrt(dx*dx+dz*dz)<3.5)hint('📋 Access code sign — memorize this number!');
   }
 
   const prox=document.getElementById('prox');
