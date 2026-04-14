@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>AESCAPE ROOM 3D · MULTIPLAYER</title>
+<title>ESCAPE ROOM 3D · MULTIPLAYER</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:ital,wght@0,300;0,400;0,700;1,400&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -11,6 +11,7 @@
   --p:#00c8ff;--g:#00ffa3;--y:#ffcc00;--r:#ff3355;--m:#ff00cc;
   --bg:#030a13;--panel:rgba(3,12,25,0.92);--border:rgba(0,200,255,0.22);
   --text:#b0cce8;--dim:rgba(176,204,232,0.45);
+  --p-glow:rgba(0,200,255,0.6);
   --fd:'Orbitron',monospace;--fm:'JetBrains Mono',monospace;
   --safe-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -20,7 +21,9 @@ body{background:var(--bg);font-family:var(--fm);touch-action:none;cursor:crossha
 #ol-scan{position:fixed;inset:0;z-index:5;pointer-events:none;
   background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);}
 #ol-vign{position:fixed;inset:0;z-index:6;pointer-events:none;
-  background:radial-gradient(ellipse 85% 85% at 50% 50%,transparent 50%,rgba(0,0,0,0.78) 100%);}
+  background:radial-gradient(ellipse 85% 85% at 50% 50%,transparent 40%,rgba(0,0,0,0.85) 100%);}
+#ol-noise{position:fixed;inset:0;z-index:7;pointer-events:none;opacity:0.04;
+  background-image: url('data:image/svg+xml,<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(%23n)"/></svg>');}
 #flash-overlay{position:fixed;inset:0;z-index:90;pointer-events:none;opacity:0;}
 #flash-overlay.solve{background:rgba(0,255,163,0.15);animation:flashSolve .55s ease-out forwards;}
 #flash-overlay.error{background:rgba(255,51,85,0.2);animation:flashError .4s ease-out forwards;}
@@ -198,6 +201,16 @@ body{background:var(--bg);font-family:var(--fm);touch-action:none;cursor:crossha
 #exit-beacon.on{opacity:1;}
 @keyframes beaconPulse{0%,100%{box-shadow:0 0 8px rgba(0,255,163,0.15)}50%{box-shadow:0 0 28px rgba(0,255,163,0.5)}}
 
+#ping-label{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  pointer-events:none;z-index:22;opacity:0;transition:opacity .3s;
+  font-size:10px;font-weight:900;color:var(--p);letter-spacing:2px;
+  background:rgba(0,200,255,0.1);border:1px solid var(--p);
+  border-radius:20px;padding:4px 14px;
+  box-shadow:0 0 20px var(--p-glow);
+}
+#ping-label.on{opacity:1;}
+
 #plate-hold{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:20;display:none;}
 #plate-hold svg{width:76px;height:76px;}
 #plate-ring{stroke-dasharray:220;stroke-dashoffset:220;transition:stroke-dashoffset .08s linear;}
@@ -357,6 +370,7 @@ body{background:var(--bg);font-family:var(--fm);touch-action:none;cursor:crossha
 
 <div id="ol-scan"></div>
 <div id="ol-vign"></div>
+<div id="ol-noise"></div>
 <div id="flash-overlay"></div>
 
 <div id="xhair">
@@ -385,6 +399,7 @@ body{background:var(--bg);font-family:var(--fm);touch-action:none;cursor:crossha
 
 <div id="prox"></div>
 <div id="exit-beacon">🚪 EXIT ↑</div>
+<div id="ping-label">📍 TEAM PING</div>
 
 <div id="plate-hold">
   <svg viewBox="0 0 80 80">
@@ -517,32 +532,63 @@ const CODE_BLOCK_Y = 0.9; // height of block centers
 const CODE_BLOCK_SPACING = 0.92;
 
 const THEMES=[
-  {name:'THE BUNKER',   bg:0x030a06,wall:0x0a1a0c,floor:0x070f08,ceil:0x060d07,fog:[0x030a06,.032],ambient:[0x0d2a10,1.0],
-   lights:[[-5,2.5,-5,0x224a22],[5,2.5,5,0x1a4a1a],[0,3,0,0x1a3020]],strip:0x00ff88},
-  {name:'THE LABORATORY',bg:0x030a13,wall:0x0d1e30,floor:0x0a1520,ceil:0x08121a,fog:[0x030a13,.034],ambient:[0x102040,1.2],
-   lights:[[-5,2.5,-5,0x2244aa],[5,2.5,5,0x2244cc],[0,3,0,0x1a2a44]],strip:0x00c8ff},
-  {name:'THE VAULT',    bg:0x0d0906,wall:0x1e1508,floor:0x140e05,ceil:0x0e0b04,fog:[0x0d0906,.036],ambient:[0x2a1804,.95],
-   lights:[[-5,2.5,-5,0xaa7722],[5,2.5,5,0xaa6622],[0,3,0,0x442a10]],strip:0xffcc00},
+  {name:'THE BUNKER',   bg:0x030a06,wall:0x0a1a0c,floor:0x070f08,ceil:0x060d07,fog:[0x030a06,.032],ambient:[0x0d2a10,1.0],strip:0x00ff88},
+  {name:'THE LABORATORY',bg:0x030a13,wall:0x0d1e30,floor:0x0a1520,ceil:0x08121a,fog:[0x030a13,.034],ambient:[0x102040,1.2],strip:0x00c8ff},
+  {name:'THE VAULT',    bg:0x0d0906,wall:0x1e1508,floor:0x140e05,ceil:0x0e0b04,fog:[0x0d0906,.036],ambient:[0x2a1804,.95],strip:0xffcc00},
+  {name:'THE VOID',     bg:0x050508,wall:0x101015,floor:0x08080a,ceil:0x050508,fog:[0x050508,.040],ambient:[0x151525,1.1],strip:0xff00cc},
 ];
 
 let G=mkState(0);
 function mkState(lvl){
-  const t=THEMES[Math.min(lvl,THEMES.length-1)];
-  let s=lvl*137+42; const rng=()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};
+  let s=lvl*1337+4242; const rng=()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};
+  const baseT=THEMES[lvl % THEMES.length];
+  
+  // Procedural variation of the base theme
+  const hueShift=(rng()-.5)*0.2; // +/- 20% hue shift
+  const varyCol=(hex, amt)=>{
+    const c=new THREE.Color(hex);
+    const hsl={};c.getHSL(hsl);
+    c.setHSL((hsl.h+hueShift+1)%1, hsl.s, hsl.l*(0.9+rng()*0.2));
+    return c.getHex();
+  };
+
+  const theme={
+    name: baseT.name + ' ' + (lvl+1),
+    bg: varyCol(baseT.bg),
+    wall: varyCol(baseT.wall),
+    floor: varyCol(baseT.floor),
+    ceil: varyCol(baseT.ceil),
+    fog: [varyCol(baseT.fog[0]), baseT.fog[1]*(0.9+rng()*0.2)],
+    ambient: [varyCol(baseT.ambient[0]), baseT.ambient[1]],
+    strip: varyCol(baseT.strip),
+    lights: [
+      [(rng()-.5)*10, 2.5, (rng()-.5)*10, varyCol(baseT.strip)],
+      [(rng()-.5)*10, 2.5, (rng()-.5)*10, varyCol(baseT.strip)],
+      [0, 3.5, 0, 0xffffff]
+    ]
+  };
+
   const code=String(1000+Math.floor(rng()*9000));
-  const spread=lvl*.8;
+  const spread=lvl*.15;
+  
+  // Procedural placement of puzzles
+  const randPos=(minDist=3)=>{
+    let p; do{ p={x:(rng()-.5)*10, y:0, z:(rng()-.5)*10}; } while(Math.sqrt(p.x*p.x+p.z*p.z)<minDist);
+    return p;
+  };
+
   return{
-    level:lvl,theme:Math.min(lvl,THEMES.length-1),players:{},
+    level:lvl,theme:theme,players:{},
     items:[
-      {id:'key',   type:'key',    label:'🗝️ KEY',    pos:{x:-3.5+rng()*.5,y:0,z:2.5+rng()*.5},  collected:false},
-      {id:'card',  type:'keycard',label:'💳 KEYCARD',pos:{x:3+rng()*.5,   y:0,z:-2.5-rng()*.5}, collected:false},
-      {id:'gem',   type:'gem',    label:'💎 GEM',    pos:{x:-2.5-rng()*.5,y:0,z:-3+rng()*.5},  collected:false},
+      {id:'key',   type:'key',    label:'🗝️ KEY',    pos:randPos(4),  collected:false},
+      {id:'card',  type:'keycard',label:'💳 KEYCARD',pos:randPos(4), collected:false},
+      {id:'gem',   type:'gem',    label:'💎 GEM',    pos:randPos(4),  collected:false},
     ],
     puzzles:[
-      {id:'plate',type:'plate',  label:'⬛ PRESSURE PLATE',pos:{x:.5,y:0,z:.5},required:2,playersOn:0,holdTime:0,solved:false},
-      {id:'code', type:'code',   label:'🔢 CODE PANEL',    pos:{x:6.1,y:1.4,z:1+spread*.5},answer:code,solved:false},
+      {id:'plate',type:'plate',  label:'⬛ PRESSURE PLATE',pos:randPos(2),required:2,playersOn:0,holdTime:0,solved:false},
+      {id:'code', type:'code',   label:'🔢 CODE PANEL',    pos:{x:6.1,y:1.4,z:(rng()-.5)*6},answer:code,solved:false},
       {id:'levers',type:'levers',label:'🎚 TWIN LEVERS',
-       levers:[{pos:{x:-2+spread*.3,y:1.2,z:-5.6},active:false},{pos:{x:1.5+spread*.3,y:1.2,z:-5.6},active:false}],solved:false},
+       levers:[{pos:randPos(3),active:false},{pos:randPos(3),active:false}],solved:false},
     ],
     exit:{pos:{x:0,y:0,z:-6.2},open:false},
     win:false,startTime:Date.now(),
@@ -563,10 +609,11 @@ const joy={active:false,x:0,y:0,id:null,cx:0,cy:0,magnitude:0};
 let bobT=0,bobAmt=0,stepT=0;
 let stamina=1,staminaRegen=false;
 let ambientLight=null,flickerT=0;
+let flashlight=null,flashlightOn=true;
 let mmFrame=0;
 
 let scene,camera,renderer,clock;
-let V={room:[],items:{},puzzles:{},exitGroup:null,players:{},dust:null,codeBoxGroups:[]};
+let V={room:[],items:{},puzzles:{},exitGroup:null,players:{},dust:null,codeBoxGroups:[],pings:{}};
 
 function init3D(){
   scene=new THREE.Scene();
@@ -603,6 +650,7 @@ function rebuildScene(){
   if(V.dust){scene.remove(V.dust);V.dust=null;}
   // Remove old code box groups (they're also in V.room, but clear the array)
   V.codeBoxGroups=[];
+  Object.values(V.pings).forEach(p=>scene.remove(p));V.pings={};
   ambientLight=null;
 
   const th=THEMES[G.theme];
@@ -611,6 +659,14 @@ function rebuildScene(){
   buildLights(th);buildRoom(th);buildProps(th);
   buildCodeBoxes(th); // ← number block clue display
   buildItems();buildPuzzles(th);buildExit();buildDust();
+  
+  // Flashlight attached to camera
+  if(flashlight)scene.remove(flashlight);
+  flashlight=new THREE.SpotLight(0xffffff,2.5,14,Math.PI/6,.3,1.5);
+  flashlight.castShadow=true;
+  flashlight.shadow.mapSize.set(512,512);
+  scene.add(flashlight);scene.add(flashlight.target);
+
   syncAllVisuals();
 }
 
@@ -624,17 +680,19 @@ function mkMat(color,opts={}){
 }
 
 function buildLights(th){
-  scene.children.filter(c=>c.isLight||c.isSpotLight).forEach(c=>scene.remove(c));
+  scene.children.filter(c=>c.isLight||c.isSpotLight).forEach(c=>{
+    if(c!==flashlight && c!==flashlight?.target) scene.remove(c);
+  });
   ambientLight=new THREE.AmbientLight(th.ambient[0],th.ambient[1]);
   scene.add(ambientLight);
-  const sun=new THREE.DirectionalLight(0xffffff,0.9);
+  const sun=new THREE.DirectionalLight(0xffffff,0.6);
   sun.position.set(4,10,4);sun.castShadow=true;
-  sun.shadow.mapSize.set(1024,1024);
+  sun.shadow.mapSize.set(512,512); // Lowered for speed
   sun.shadow.camera.near=.1;sun.shadow.camera.far=28;
   sun.shadow.camera.left=sun.shadow.camera.bottom=-11;
   sun.shadow.camera.right=sun.shadow.camera.top=11;
   scene.add(sun);
-  th.lights.forEach(([x,y,z,c])=>{const pl=new THREE.PointLight(c,2.0,9,2);pl.position.set(x,y,z);scene.add(pl);});
+  th.lights.forEach(([x,y,z,c])=>{const pl=new THREE.PointLight(c,1.5,8,2);pl.position.set(x,y,z);scene.add(pl);});
 }
 
 function buildRoom(th){
@@ -684,19 +742,46 @@ function buildProps(th){
   const wood=mkMat(0x2a1a0a,{r:.9,m:.05});
   const metal=mkMat(0x1a2a3a,{r:.4,m:.7});
   const dark=mkMat(0x0d1520,{r:.8});
-  [[HALF-1.2,.4,-HALF+1.2,.3],[-(HALF-1.4),.4,HALF-1.4,-.2]].forEach(([x,y,z,ry])=>{
+  
+  // Use a stable seed for props based on level
+  let s=G.level*999+123; const prng=()=> {s=(s*16807)%2147483647;return(s-1)/2147483646;};
+
+  // Procedural clutter
+  for(let i=0; i<4+G.level%5; i++) {
+    const x=(prng()-.5)*11, z=(prng()-.5)*11;
+    // Don't place on center or too close to walls
+    if(Math.abs(x)>4.5 || Math.abs(z)>4.5) continue;
+    if(Math.abs(x)<1.5 && Math.abs(z)<1.5) continue;
+    
     const g=new THREE.Group();
-    const c=mesh(new THREE.BoxGeometry(.9,.9,.9),wood);c.castShadow=true;c.receiveShadow=true;g.add(c);
-    [-1,1].forEach(off=>{const b=mesh(new THREE.BoxGeometry(.92,.05,.92),metal);b.position.y=off*.3;g.add(b);});
-    g.position.set(x,y,z);g.rotation.y=ry;addR(g);
-  });
+    const type = prng();
+    if(type > 0.6) {
+      // Crate
+      const c=mesh(new THREE.BoxGeometry(.8,.8,.8),wood);c.castShadow=true;c.receiveShadow=true;g.add(c);
+      [-1,1].forEach(off=>{const b=mesh(new THREE.BoxGeometry(.82,.04,.82),metal);b.position.y=off*.3;g.add(b);});
+    } else {
+      // Cylinder/Barrel
+      const b=mesh(new THREE.CylinderGeometry(.4,.4,.9,12), metal); b.castShadow=true; g.add(b);
+    }
+    g.position.set(x, .4, z);
+    g.rotation.y = prng()*Math.PI;
+    addR(g);
+  }
+
   const desk=new THREE.Group();
   const deskB=mesh(new THREE.BoxGeometry(1.4,.6,1.8),dark);deskB.position.y=.3;deskB.castShadow=true;desk.add(deskB);
   const monitor=mesh(new THREE.BoxGeometry(1.1,.75,.08),metal);monitor.position.set(0,.9,-.8);desk.add(monitor);
   const scr=mesh(new THREE.PlaneGeometry(.95,.6),
     mkMat(th.strip,{r:.2,m:.5,em:th.strip,ei:1.4}));scr.position.set(0,.9,-.73);desk.add(scr);
   const kb=mesh(new THREE.BoxGeometry(.8,.04,.4),metal);kb.position.set(0,.62,-.35);desk.add(kb);
-  desk.position.set(HALF-.76,0,-1.5);desk.rotation.y=-Math.PI/2;addR(desk);
+  
+  // Random desk position on a wall
+  const side = Math.floor(prng()*4);
+  if(side===0) { desk.position.set(HALF-.76,0,(prng()-.5)*6); desk.rotation.y=-Math.PI/2; }
+  else if(side===1) { desk.position.set(-HALF+.76,0,(prng()-.5)*6); desk.rotation.y=Math.PI/2; }
+  else if(side===2) { desk.position.set((prng()-.5)*6,0,HALF-.76); desk.rotation.y=Math.PI; }
+  else { desk.position.set((prng()-.5)*6,0,-HALF+.76); desk.rotation.y=0; }
+  addR(desk);
 }
 
 // ── GLOWING NUMBER BLOCK CLUE ─────────────────────────
@@ -952,11 +1037,11 @@ function buildPuzzles(th){
 function buildExit(){
   const grp=new THREE.Group();
   const open=G.exit.open;
-  const fm=mkMat(0x1a3325,{r:.5,m:.5});
+  const fm=mkMat(G.theme.wall,{r:.5,m:.5});
   [[0,1.7,0,1.9,.15,.16],[-.98,.9,0,.16,2,.16],[.98,.9,0,.16,2,.16]].forEach(([x,y,z,w,h,d])=>{
     const f=mesh(new THREE.BoxGeometry(w,h,d),fm);f.position.set(x,y,z);grp.add(f);
   });
-  const doorM=new THREE.MeshStandardMaterial({color:0x0e2e1a,emissive:new THREE.Color(open?0x00ff44:0x001a00),emissiveIntensity:open?1.8:.4,roughness:.6,metalness:.4});
+  const doorM=new THREE.MeshStandardMaterial({color:new THREE.Color(G.theme.wall).multiplyScalar(0.5),emissive:new THREE.Color(open?0x00ff44:0x001a00),emissiveIntensity:open?1.8:.4,roughness:.6,metalness:.4});
   grp.add(mesh(new THREE.BoxGeometry(1.78,2.9,.12),doorM)).position.set(0,.95,0);
   const sign=mesh(new THREE.BoxGeometry(1,.28,.07),new THREE.MeshStandardMaterial({color:0x00ff44,emissive:new THREE.Color(0x00ff44),emissiveIntensity:open?4:1.2}));
   sign.position.set(0,3,0);grp.add(sign);
@@ -1029,8 +1114,8 @@ function syncAllVisuals(){
       if(pl?.isLight){pl.color.setHex(p.solved?0x00ff88:p.playersOn>0?0xaaaa00:0x0044aa);pl.intensity=p.solved?2:p.playersOn>0?1.2:.5;}
     }
     if(p.type==='code'){
-      const scr=grp.children[1];
-      const pl=grp.children[12];
+      const scr=grp.children.find(c=>c.geometry?.type==='PlaneGeometry');
+      const pl=grp.children.find(c=>c.isPointLight);
       if(scr?.material){scr.material.color.setHex(p.solved?0x00ff88:0x0055ff);scr.material.emissive.setHex(p.solved?0x00aa44:0x0022cc);}
       if(pl?.isLight){pl.color.setHex(p.solved?0x00ff88:0x0044ff);}
     }
@@ -1088,6 +1173,8 @@ function createRoom(){
 function joinRoom(code){
   if(!/^\d{4}$/.test(code)){setLobbyStatus('❌ Enter a 4-digit code');return;}
   setLobbyStatus('⏳ Connecting…');
+  const btn=document.getElementById('btn-join');
+  btn.disabled=true;btn.textContent='...';
   if(peer){peer.destroy();peer=null;}
   peer=new Peer(undefined,{debug:0});
   peer.on('open',id=>{
@@ -1097,7 +1184,10 @@ function joinRoom(code){
     conn.on('data',d=>onData(code,d));
     conn.on('close',()=>{hint('❌ Host disconnected');setRoomBadge('⚫ OFFLINE');});
   });
-  peer.on('error',e=>setLobbyStatus(e.type==='peer-unavailable'?'❌ Room not found':'❌ '+e.type));
+  peer.on('error',e=>{
+    setLobbyStatus(e.type==='peer-unavailable'?'❌ Room not found':'❌ '+e.type);
+    btn.disabled=false;btn.textContent='JOIN →';
+  });
 }
 function dropPeer(pid){
   delete conns[pid];
@@ -1114,6 +1204,7 @@ function onData(sender,d){
     }
     else if(d.t==='INTERACT')doInteractFor(sender,d.pid,d.extra);
     else if(d.t==='SHARE'){doShare(sender);broadcastState();}
+    else if(d.t==='PING')onRemotePing(sender,d.pos);
     else if(d.t==='RESET')loadLevel(G.level);
     else if(d.t==='NEXT'&&G.win)loadLevel(G.level+1);
   }
@@ -1128,7 +1219,7 @@ function loadLevel(lvl){
   let i=0;Object.keys(G.players).forEach(pid=>{G.players[pid].pos={x:(i-.5)*.8,y:0,z:4.5};G.players[pid].inventory=[];i++;});
   plateHoldProgress=0;
   rebuildScene();updateHUD();flashLevel(lvl);
-  hint('🔍 Level '+(lvl+1)+' · '+THEMES[G.theme].name+' — find the glowing number blocks for the code!');
+  hint('🔍 Level '+(lvl+1)+' · '+G.theme.name+' — explore the new layout!');
   if(isHost)broadcastFull();
 }
 
@@ -1228,6 +1319,39 @@ function doShare(pid){
   });
   if(best&&bd<9){const item=giver.inventory.pop();best.inventory.push(item);sfxPickup();hint(`🤝 Shared ${item} with ${best.name}!`);}
   else hint('❌ No teammate nearby — get closer first!');
+}
+
+function onRemotePing(pid,pos){
+  const p=G.players[pid];if(!p)return;
+  hint(`📍 ${p.name} pinged a location!`);
+  createPingVisual(pid,pos,p.color);
+}
+
+function createPingVisual(pid,pos,color){
+  if(V.pings[pid])scene.remove(V.pings[pid]);
+  const grp=new THREE.Group();
+  const ring=mesh(new THREE.TorusGeometry(.4,.04,8,32),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.8}));
+  ring.rotation.x=Math.PI/2;grp.add(ring);
+  const pl=new THREE.PointLight(color,2,4);pl.position.y=.5;grp.add(pl);
+  grp.position.set(pos.x,.02,pos.z);
+  grp.userData={t:0,color};
+  scene.add(grp);V.pings[pid]=grp;
+  sfxPing();
+}
+
+function localPing(){
+  if(!myId||!G.players[myId])return;
+  // Ping at crosshair intersection or just ahead
+  const ray=new THREE.Raycaster();
+  ray.setFromCamera(new THREE.Vector2(0,0),camera);
+  const hits=ray.intersectObjects(V.room,true);
+  let pos;
+  if(hits.length){pos=hits[0].point;}
+  else{const dir=new THREE.Vector3();camera.getWorldDirection(dir);pos=camera.position.clone().add(dir.multiplyScalar(4));}
+  
+  createPingVisual(myId,pos,G.players[myId].color);
+  if(isHost)Object.values(conns).forEach(c=>c.send({t:'PING',pos}));
+  else toHost({t:'PING',pos});
 }
 
 // ── MOVEMENT ──────────────────────────────────────────
@@ -1440,8 +1564,19 @@ function animConfetti(cv){
 }
 
 // ── AUDIO ─────────────────────────────────────────────
-let actx;
-function ac(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();if(actx.state==='suspended')actx.resume();return actx;}
+let actx, ambientHum;
+function ac(){
+  if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+  if(actx.state==='suspended')actx.resume();
+  if(!ambientHum && actx.state==='running'){
+    // Create a low subtle room hum
+    const g=actx.createGain();g.gain.value=0.04;g.connect(actx.destination);
+    const o1=actx.createOscillator();o1.type='sine';o1.frequency.value=60;o1.connect(g);o1.start();
+    const o2=actx.createOscillator();o2.type='sine';o2.frequency.value=62;o2.connect(g);o2.start();
+    ambientHum=true;
+  }
+  return actx;
+}
 function tone(freq,dur=.1,type='sine',vol=.2){
   try{const c=ac(),o=c.createOscillator(),g=c.createGain();
     o.connect(g);g.connect(c.destination);o.type=type;o.frequency.value=freq;
@@ -1449,6 +1584,7 @@ function tone(freq,dur=.1,type='sine',vol=.2){
     o.start();o.stop(c.currentTime+dur);}catch(e){}
 }
 function sfxClick() {tone(800,.06,'sine',.1);}
+function sfxPing()  {tone(600,.1,'sine',.12);setTimeout(()=>tone(900,.15,'sine',.12),60);}
 function sfxPickup(){tone(920,.1,'sine',.14);setTimeout(()=>tone(1200,.12,'sine',.14),70);}
 function sfxSolve() {[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.2,'sine',.2),i*85));}
 function sfxError() {tone(160,.25,'sawtooth',.13);}
@@ -1482,11 +1618,15 @@ function closeLobby(){
   },500);
 }
 function flashLevel(lvl){
-  const th=THEMES[Math.min(lvl,THEMES.length-1)];
+  const th=G.theme;
   const el=document.getElementById('lvl-flash');const inner=document.getElementById('lvl-flash-inner');
-  inner.textContent='LEVEL '+(lvl+1)+' · '+th.name;
-  inner.style.color=th.strip===0x00ff88?'#00ffa3':th.strip===0x00c8ff?'#00c8ff':'#ffcc00';
+  inner.textContent=th.name;
+  inner.style.color=new THREE.Color(th.strip).getStyle();
   el.style.opacity='1';setTimeout(()=>el.style.opacity='0',2200);
+  
+  // Visual flicker on level load
+  triggerFlash('solve');
+  setTimeout(()=>triggerFlash('solve'),150);
 }
 function updateHUD(){
   document.getElementById('level-badge').textContent='LVL '+(G.level+1);
@@ -1583,6 +1723,8 @@ function setupControls(){
   window.addEventListener('keydown',e=>{
     K[e.code]=true;
     if(e.code==='KeyE'||e.code==='Space')interact();
+    if(e.code==='KeyQ')localPing();
+    if(e.code==='KeyF'){flashlightOn=!flashlightOn;sfxClick();hint('🔦 Flashlight '+(flashlightOn?'ON':'OFF'));}
     if(e.code==='Escape'){
       document.getElementById('code-modal').classList.remove('open');
       if(pointerLocked)document.exitPointerLock();
@@ -1678,12 +1820,31 @@ function animate(){
   localMove(dt);
   updateProximity();
 
+  // Flashlight follows camera
+  if(flashlight){
+    flashlight.position.copy(camera.position);
+    const dir=new THREE.Vector3();camera.getWorldDirection(dir);
+    flashlight.target.position.copy(camera.position).add(dir);
+    flashlight.intensity=flashlightOn?2.5:0;
+  }
+
   // Float + spin collectibles
   Object.entries(V.items).forEach(([id,grp])=>{
     const it=G.items.find(x=>x.id===id);if(!it)return;
     const obj=grp.children[0];
     obj.position.y=Math.sin(t0*1.8+it.pos.x)*.1;
     obj.rotation.y=t0*.85;
+  });
+
+  // Animate pings
+  Object.keys(V.pings).forEach(pid=>{
+    const p=V.pings[pid];p.userData.t+=dt;
+    if(p.userData.t>4){scene.remove(p);delete V.pings[pid];return;}
+    const ring=p.children[0];const pl=p.children[1];
+    const sc=1+Math.sin(p.userData.t*6)*.1;
+    ring.scale.set(sc,sc,sc);
+    ring.material.opacity=Math.max(0,1-p.userData.t/4);
+    pl.intensity=2*(1-p.userData.t/4);
   });
 
   // Animate glowing number blocks — smooth bob + gentle wobble
