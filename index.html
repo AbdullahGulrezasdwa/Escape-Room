@@ -572,8 +572,15 @@ function mkState(lvl){
   const spread=lvl*.15;
   
   // Procedural placement of puzzles
-  const randPos=(minDist=3)=>{
-    let p; do{ p={x:(rng()-.5)*10, y:0, z:(rng()-.5)*10}; } while(Math.sqrt(p.x*p.x+p.z*p.z)<minDist);
+  const randPos=(minDist=3, y=0)=>{
+    let p; 
+    do{ 
+      p={x:(rng()-.5)*10, y, z:(rng()-.5)*10}; 
+    } while(
+      Math.sqrt(p.x*p.x+p.z*p.z)<minDist ||
+      (Math.abs(p.x-0)<2.5 && Math.abs(p.z-2.2)<1.5) || // Avoid code blocks
+      (Math.abs(p.x-0)<2 && p.z<-4) // Avoid exit door area
+    );
     return p;
   };
 
@@ -588,9 +595,10 @@ function mkState(lvl){
       {id:'plate',type:'plate',  label:'⬛ PRESSURE PLATE',pos:randPos(2),required:2,playersOn:0,holdTime:0,solved:false},
       {id:'code', type:'code',   label:'🔢 CODE PANEL',    pos:{x:6.1,y:1.4,z:(rng()-.5)*6},answer:code,solved:false},
       {id:'levers',type:'levers',label:'🎚 TWIN LEVERS',
-       levers:[{pos:randPos(3),active:false},{pos:randPos(3),active:false}],solved:false},
+       levers:[{pos:randPos(3, 1.2),active:false},{pos:randPos(3, 1.2),active:false}],solved:false},
     ],
     exit:{pos:{x:0,y:0,z:-6.2},open:false},
+    desk:{side: Math.floor(rng()*3), offset: (rng()-.5)*6}, // 0: East, 1: West, 2: South (avoid North/exit)
     win:false,startTime:Date.now(),
   };
 }
@@ -653,7 +661,7 @@ function rebuildScene(){
   Object.values(V.pings).forEach(p=>scene.remove(p));V.pings={};
   ambientLight=null;
 
-  const th=THEMES[G.theme];
+  const th=G.theme;
   scene.background=new THREE.Color(th.bg);
   scene.fog=new THREE.FogExp2(th.fog[0],th.fog[1]);
   buildLights(th);buildRoom(th);buildProps(th);
@@ -752,6 +760,10 @@ function buildProps(th){
     // Don't place on center or too close to walls
     if(Math.abs(x)>4.5 || Math.abs(z)>4.5) continue;
     if(Math.abs(x)<1.5 && Math.abs(z)<1.5) continue;
+    // Protect code blocks pedestal
+    if(Math.abs(x-CODE_BLOCK_X)<2.5 && Math.abs(z-CODE_BLOCK_Z)<1.5) continue;
+    // Protect spawn area
+    if(z>3.5) continue;
     
     const g=new THREE.Group();
     const type = prng();
@@ -775,12 +787,11 @@ function buildProps(th){
     mkMat(th.strip,{r:.2,m:.5,em:th.strip,ei:1.4}));scr.position.set(0,.9,-.73);desk.add(scr);
   const kb=mesh(new THREE.BoxGeometry(.8,.04,.4),metal);kb.position.set(0,.62,-.35);desk.add(kb);
   
-  // Random desk position on a wall
-  const side = Math.floor(prng()*4);
-  if(side===0) { desk.position.set(HALF-.76,0,(prng()-.5)*6); desk.rotation.y=-Math.PI/2; }
-  else if(side===1) { desk.position.set(-HALF+.76,0,(prng()-.5)*6); desk.rotation.y=Math.PI/2; }
-  else if(side===2) { desk.position.set((prng()-.5)*6,0,HALF-.76); desk.rotation.y=Math.PI; }
-  else { desk.position.set((prng()-.5)*6,0,-HALF+.76); desk.rotation.y=0; }
+  // Random desk position on a wall (East, West, South)
+  const d=G.desk;
+  if(d.side===0) { desk.position.set(HALF-.76,0,d.offset); desk.rotation.y=-Math.PI/2; }
+  else if(d.side===1) { desk.position.set(-HALF+.76,0,d.offset); desk.rotation.y=Math.PI/2; }
+  else { desk.position.set(d.offset,0,HALF-.76); desk.rotation.y=Math.PI; }
   addR(desk);
 }
 
@@ -792,7 +803,7 @@ function buildCodeBoxes(th){
   const codePuzzle=G.puzzles.find(p=>p.type==='code');
   const code=codePuzzle?codePuzzle.answer:'1234';
   const stripHex=th.strip;
-  const stripCSS=stripHex===0x00ff88?'#00ff88':stripHex===0x00c8ff?'#00c8ff':'#ffcc00';
+  const stripCSS='#'+Math.floor(stripHex).toString(16).padStart(6,'0');
 
   // Block colours — vivid, distinct from each other and from the theme
   const BCOLS=  [0xff2244, 0x0099ff, 0x00dd66, 0xffaa00];
@@ -1019,6 +1030,11 @@ function buildPuzzles(th){
       p.levers.forEach((l)=>{
         const lg=new THREE.Group();
         lg.add(mesh(new THREE.BoxGeometry(.3,.16,.22),mkMat(0x334455,{r:.4,m:.6})));
+        
+        const ped = mesh(new THREE.BoxGeometry(.34, l.pos.y, .26), mkMat(0x1a2a3a,{r:.5,m:.5}));
+        ped.position.y = -l.pos.y/2;
+        lg.add(ped);
+
         const hm=new THREE.MeshStandardMaterial({color:0x888888,roughness:.3,metalness:.8,
           emissive:new THREE.Color(l.active?0x00ff00:0xff2200),emissiveIntensity:.8});
         const handle=mesh(new THREE.CylinderGeometry(.04,.04,.58,8),hm);
@@ -1415,7 +1431,13 @@ function canMove(x,z){
   // Block code box pedestal area (small)
   if(Math.abs(x-CODE_BLOCK_X)<2.4&&Math.abs(z-CODE_BLOCK_Z)<.55&&z<CODE_BLOCK_Z+.55)return false;
   if(!G.exit.open){const ep=G.exit.pos;if(Math.abs(x-ep.x)<1.1&&Math.abs(z-ep.z)<.45)return false;}
-  if(Math.abs(x-(HALF-.76))<.9&&Math.abs(z+1.5)<1.1)return false;
+  
+  // Desk collision
+  const d=G.desk;
+  if(d.side===0 && Math.abs(x-(HALF-.76))<.9 && Math.abs(z-d.offset)<1.1) return false;
+  if(d.side===1 && Math.abs(x-(-HALF+.76))<.9 && Math.abs(z-d.offset)<1.1) return false;
+  if(d.side===2 && Math.abs(x-d.offset)<1.1 && Math.abs(z-(HALF-.76))<.9) return false;
+
   return true;
 }
 
@@ -1872,7 +1894,7 @@ function animate(){
   // Ambient light flicker
   if(ambientLight&&(Math.round(t0*60)%2===0)){
     flickerT+=dt;
-    ambientLight.intensity=THEMES[G.theme].ambient[1]*(1+Math.sin(flickerT*8.1)*.01+Math.sin(flickerT*13.4)*.007);
+    ambientLight.intensity=G.theme.ambient[1]*(1+Math.sin(flickerT*8.1)*.01+Math.sin(flickerT*13.4)*.007);
   }
 
   // Dust particles
